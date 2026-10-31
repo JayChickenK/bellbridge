@@ -1,0 +1,22 @@
+# ESPHome
+secrets.yaml
+.esphome/
+
+# KiCad local and backup files
+*.kicad_prl
+*-backups/
+fp-info-cache
+*.lck
+_autosave-*
+
+# generate.py intermediates (the order files are in hardware/pcbway/)
+hardware/gerber/
+hardware/kicad-pos.csv
+__pycache__/
+
+# Working notes, not for the public repository
+PUBLISHING-CHECKLIST.md
+
+# OS
+.DS_Store
+Thumbs.db

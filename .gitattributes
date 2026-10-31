@@ -1,0 +1,9 @@
+# Text files are stored with LF line endings.
+* text=auto
+
+# Fab outputs stay byte-identical to the files inside the order zip.
+hardware/pcbway/** -text
+
+*.png binary
+*.jpg binary
+*.zip binary

@@ -1,0 +1,156 @@
+# BellBridge v1.0 - ESPHome firmware for the Ritto 7630 TwinBus intercom board.
+#
+# Based on esphome/ritto-intercom.yaml from https://github.com/duramson/ritto-esp
+# (MIT License, Copyright (c) 2026 Cedrik Theesen). Logic, ids and entity names are
+# unchanged, so Home Assistant automations written for ritto-esp keep working.
+# BellBridge carries a bare ESP32-C6-MINI-1-N4 instead of a Seeed XIAO ESP32-C6;
+# the changes for the board are marked "BellBridge".
+#
+# Pin map (BellBridge GPIO = XIAO pin of the ritto-esp perfboard build):
+#   GPIO19 = D8   door opener: R1 220 ohm -> OK1, pulls terminal DOOR (TUER) to bus GND
+#   GPIO20 = D9   apartment bell: terminal FLOOR (ETAGE) -> R3 -> OK3, 10 k pull-up R5
+#   GPIO18 = D10  chime: terminal CHIME (KLINGEL) -> R2 -> OK2, 10 k pull-up R4
+
+esphome:
+  name: ritto-intercom
+  friendly_name: "Ritto Intercom"
+
+# BellBridge: ESP32-C6-MINI-1-N4, 4 MB flash, PCB antenna. The module has no RF switch,
+# so the XIAO's on_boot antenna block and its GPIO3/GPIO14 outputs are gone.
+esp32:
+  board: esp32-c6-devkitc-1
+  variant: esp32c6
+  flash_size: 4MB
+  framework:
+    type: esp-idf
+
+# Logs go to the USB-C socket (USB Serial/JTAG on GPIO12/13).
+logger:
+
+# BellBridge: the API is encrypted and OTA needs a password. Without them any device on
+# the network could press "Open Door" or load other firmware. Home Assistant asks for
+# the key when the device is added; to run without them, delete the two marked lines.
+api:
+  encryption:
+    key: !secret api_encryption_key  # BellBridge
+
+# ESPHome 2026.9 and later warn about the password and suggest "encryption: {}" in its
+# place, which reuses the API key. The password works in every version.
+ota:
+  - platform: esphome
+    password: !secret ota_password  # BellBridge
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+globals:
+  # Suppresses the main-door event while the apartment bell is ringing.
+  # The Ritto bus fires the main-door signal shortly after the apartment
+  # bell, so we gate it to avoid a false "main door" trigger.
+  - id: block_main_door_signal
+    type: bool
+    initial_value: 'false'
+
+binary_sensor:
+  # Raw bus signals, internal only. They drive the logic below and are
+  # never exposed to Home Assistant.
+
+  # Apartment bell (ETAGE). Idles at about 5 V, so OK3 holds GPIO20 low; the apartment
+  # button pulls ETAGE to ground, OK3 lets go and the pull-up takes the pin high.
+  - platform: gpio
+    pin:
+      number: GPIO20  # BellBridge (XIAO D9)
+      mode:
+        input: true
+        pullup: true  # R5 10 k on the board does the same
+    id: apartment_raw
+    internal: true
+    filters:
+      - delayed_on: 50ms
+    on_press:
+      # Block the main-door signal that the bus fires right after.
+      - globals.set:
+          id: block_main_door_signal
+          value: 'true'
+      - binary_sensor.template.publish:
+          id: doorbell_apartment
+          state: ON
+      # Hold long enough for the Ritto tone to finish.
+      - delay: 4s
+      - binary_sensor.template.publish:
+          id: doorbell_apartment
+          state: OFF
+      - globals.set:
+          id: block_main_door_signal
+          value: 'false'
+
+  # Main-door bell (KLINGEL). A 5 V pulse on any ring lights OK2, which pulls
+  # GPIO18 to ground.
+  - platform: gpio
+    pin:
+      number: GPIO18  # BellBridge (XIAO D10)
+      mode:
+        input: true
+        pullup: true  # R4 10 k on the board does the same
+      inverted: true  # signal is pulled to GND on ring
+    id: main_door_raw
+    internal: true
+    filters:
+      - delayed_on: 100ms
+    on_press:
+      - if:
+          condition:
+            # Only fire when the apartment bell is not blocking.
+            lambda: 'return !id(block_main_door_signal);'
+          then:
+            - binary_sensor.template.publish:
+                id: doorbell_main
+                state: ON
+            - delay: 4s
+            - binary_sensor.template.publish:
+                id: doorbell_main
+                state: OFF
+
+  # Sensors exposed to Home Assistant.
+  - platform: template
+    name: "Doorbell Apartment"
+    id: doorbell_apartment
+    icon: "mdi:door"
+
+  - platform: template
+    name: "Doorbell Main"
+    id: doorbell_main
+    icon: "mdi:doorbell"
+
+switch:
+  # Door opener (TUER, GPIO19 -> R1 -> OK1). Internal: driven only by the button
+  # below, never toggled directly from HA. R6 (100 k to GND) keeps the pin low
+  # while the module resets and boots, so the door does not buzz then.
+  - platform: gpio
+    pin: GPIO19  # BellBridge (XIAO D8)
+    id: door_opener_relay
+    internal: true
+    restore_mode: ALWAYS_OFF
+
+button:
+  - platform: template
+    name: "Open Door"
+    id: btn_door_open
+    icon: "mdi:door-open"
+    on_press:
+      - if:
+          condition:
+            switch.is_off: door_opener_relay
+          then:
+            - switch.turn_on: door_opener_relay
+            - delay: 500ms
+            - switch.turn_off: door_opener_relay
+
+sensor:
+  # BellBridge: the module's PCB antenna replaces the XIAO's external antenna. Check the
+  # signal once the board sits behind the handset.
+  - platform: wifi_signal
+    name: "WiFi Signal"
+    update_interval: 60s
+    entity_category: diagnostic
