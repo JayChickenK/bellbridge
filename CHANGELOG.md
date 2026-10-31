@@ -1,5 +1,69 @@
 # Changelog
 
+## [1.1] - 2026-10-31
+
+<!-- TODO after testing: add a line about the test result. If v1.0 was never built, say
+so under [1.0]. -->
+
+Released before the first board was built and tested. A smaller board with the same
+circuit and terminal order: 26.2 × 27.5 mm, and 31.4 × 27.5 mm with the module's antenna,
+which sticks out past the left edge. v1.0 was 36.4 × 31.5 mm (now 25 % less overall and
+37 % less board area).
+
+### Changed from v1.0
+
+- Optocouplers LTV-357T-C (SO-4) instead of LTV-817S-TA1-C (SMDIP-4), and no milled slot.
+  The 1.6 mm copper-free barrier is now a straight line through the optocouplers; their
+  pad rows are 4.3 mm apart (v1.0: 8 mm).
+- Input resistors R2/R3: 1.5 kΩ, 0.5 W in 1210 (YAGEO RC1210FR-071K5L) instead of 1 W in
+  2512. A wire on +24 V still stays below the rating (0.35 W).
+- All other resistors and capacitors in 0603 instead of 0805.
+- Screw terminal DORABO DB125-2.54-4P-GN-S (2.54 mm pitch, 8.4 mm high, wires
+  26–18 AWG) instead of KANGNEX WJ124-3.81. It overhangs the right edge by 0.9 mm.
+- USB-C at the top edge, directly above the module. Its land follows HRO's drawing:
+  signal pads 1.14 mm long and 0.5 mm further forward than KiCad's, power and ground pads
+  0.05 mm further in, 0.60 mm locating holes, and 1.4 mm long slots for the two shell lugs
+  near the opening (KiCad: 1.2 mm), so all four lugs have 0.6 mm of play. The receptacle
+  front overhangs the top edge by 0.46 mm.
+- The module is turned 90°: its antenna sticks out 5.2 mm past the left edge, and the
+  antenna's feed end sits at the board's lower-left corner, 2.0 mm from the bottom edge,
+  as Espressif's ESP32-C6 hardware design guidelines recommend. v1.0 had the module
+  upright with bare board under the antenna. The antenna section is a KiCad rule area on
+  both layers, so KiCad's DRC keeps copper off the 0.2 mm of it that lies over the board.
+  A column of ground vias runs along the module's antenna end.
+- USB ESD array USBLC6-2P6 (SOT-666) in the D+/D− path between the receptacle and the
+  module, instead of a USBLC6-2SC6 on side branches. A discharge into the receptacle now
+  meets U3 before the module. A 100 nF capacitor (C7) at U3's VBUS pin follows the layout
+  figure in ST's datasheet.
+- No BOOT and RESET buttons and no R9. GPIO9 uses the module's internal pull-up; two bare
+  pads on the back (TP1 BOOT, TP2 GND) force download mode when bridged while USB is
+  plugged in. Replugging USB resets the board.
+- Vias stay clear of silkscreen labels, and via holes keep 0.30 mm to pad holes.
+- No signal copper under the USB-C receptacle's steel bottom plate: CC1 runs on the back
+  to R7, and the D+ link sits under the receptacle's plastic rear part.
+- Thermal spokes on the ground pads of the 0603 parts (C1–C7, R6, R7, R10) against
+  tombstoning, and a second VBUS via next to the regulator.
+- BOM in the columns of PCBWay's BOM quotation, as `bom.csv` and `bom.xlsx`: the LCSC number
+  as "Vendor Part #" and, per line, what PCBWay may substitute in "Customer Reply". J2 joins
+  the parts that must not be substituted, since its land follows HRO's drawing.
+- PCBWay counts: 14 unique parts and 25 placements (22 SMD, 2 large SMD parts U1 and J2,
+  1 through-hole part J1).
+
+### Firmware (for v1.0 and v1.1)
+
+- Fixed: two presses on the apartment bell 2.5–4 s apart could report a false "Doorbell
+  Main". The bell logic now runs in scripts with mode `restart`, so a repeated ring extends
+  the 4 s window instead of running a second copy in parallel. Entity names are unchanged.
+- "Door Open Duration": length of the opener pulse, 0.2–5 s (default 0.5 s), kept across
+  restarts.
+- "Auto Open": a switch in Home Assistant; while it is on, every street ring opens the
+  door 2 s later. It turns itself off after "Auto Open Time" (0–1440 min, default 30,
+  0 = never) and on every restart.
+- Diagnostics: restart button, uptime, chip temperature, IP address, Wi-Fi name and
+  ESPHome version.
+- OTA updates are encrypted with the API key instead of an OTA password; `ota_password`
+  is gone from `secrets.yaml`.
+
 ## [1.0] - 2026-10-31
 
 <!-- TODO after testing: add a line about the test result. -->

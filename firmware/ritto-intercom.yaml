@@ -1,15 +1,19 @@
-# BellBridge v1.0 - ESPHome firmware for the Ritto 7630 TwinBus intercom board.
+# BellBridge (v1.0 and v1.1) - ESPHome firmware for the Ritto 7630 TwinBus intercom board.
 #
 # Based on esphome/ritto-intercom.yaml from https://github.com/duramson/ritto-esp
-# (MIT License, Copyright (c) 2026 Cedrik Theesen). Logic, ids and entity names are
-# unchanged, so Home Assistant automations written for ritto-esp keep working.
-# BellBridge carries a bare ESP32-C6-MINI-1-N4 instead of a Seeed XIAO ESP32-C6;
-# the changes for the board are marked "BellBridge".
+# (MIT License, Copyright (c) 2026 Cedrik Theesen). Ids and entity names are unchanged, so
+# Home Assistant automations written for ritto-esp keep working. BellBridge carries a bare
+# ESP32-C6-MINI-1-N4 instead of a Seeed XIAO ESP32-C6; the changes for the board and the
+# additions are marked "BellBridge".
 #
 # Pin map (BellBridge GPIO = XIAO pin of the ritto-esp perfboard build):
 #   GPIO19 = D8   door opener: R1 220 ohm -> OK1, pulls terminal DOOR (TUER) to bus GND
 #   GPIO20 = D9   apartment bell: terminal FLOOR (ETAGE) -> R3 -> OK3, 10 k pull-up R5
 #   GPIO18 = D10  chime: terminal CHIME (KLINGEL) -> R2 -> OK2, 10 k pull-up R4
+
+substitutions:
+  # BellBridge: how long after a street-door ring "Auto Open" opens the door.
+  auto_open_delay: 2s
 
 esphome:
   name: ritto-intercom
@@ -27,18 +31,17 @@ esp32:
 # Logs go to the USB-C socket (USB Serial/JTAG on GPIO12/13).
 logger:
 
-# BellBridge: the API is encrypted and OTA needs a password. Without them any device on
-# the network could press "Open Door" or load other firmware. Home Assistant asks for
-# the key when the device is added; to run without them, delete the two marked lines.
+# BellBridge: the API and OTA uploads are encrypted with the same key. Without it any device
+# on the network could press "Open Door" or load other firmware. Home Assistant asks for
+# the key when the device is added.
 api:
   encryption:
-    key: !secret api_encryption_key  # BellBridge
+    key: !secret api_encryption_key
 
-# ESPHome 2026.9 and later warn about the password and suggest "encryption: {}" in its
-# place, which reuses the API key. The password works in every version.
+# BellBridge: an empty encryption block takes the API key (ESPHome 2026.9 or later).
 ota:
   - platform: esphome
-    password: !secret ota_password  # BellBridge
+    encryption: {}
 
 wifi:
   ssid: !secret wifi_ssid
@@ -51,6 +54,81 @@ globals:
   - id: block_main_door_signal
     type: bool
     initial_value: 'false'
+
+script:
+  # BellBridge: the bell logic of ritto-esp, moved into scripts with mode "restart". A ring
+  # while one is still being shown restarts the 4 s window instead of running a second copy
+  # in parallel, so the main-door signal stays blocked until 4 s after the last apartment
+  # ring.
+  - id: apartment_ring
+    mode: restart
+    then:
+      # Block the main-door signal that the bus fires right after.
+      - globals.set:
+          id: block_main_door_signal
+          value: 'true'
+      - binary_sensor.template.publish:
+          id: doorbell_apartment
+          state: ON
+      # Hold long enough for the Ritto tone to finish.
+      - delay: 4s
+      - binary_sensor.template.publish:
+          id: doorbell_apartment
+          state: OFF
+      - globals.set:
+          id: block_main_door_signal
+          value: 'false'
+
+  - id: main_door_ring
+    mode: restart
+    then:
+      - binary_sensor.template.publish:
+          id: doorbell_main
+          state: ON
+      - delay: 4s
+      - binary_sensor.template.publish:
+          id: doorbell_main
+          state: OFF
+
+  # BellBridge: one door-opener pulse, as long as "Door Open Duration" says.
+  - id: open_door
+    mode: single
+    then:
+      - switch.turn_on: door_opener_relay
+      - delay: !lambda |-
+          const float s = id(door_open_duration).state;
+          return std::isnan(s) ? 500 : (uint32_t) (s * 1000.0f);
+      - switch.turn_off: door_opener_relay
+
+  # BellBridge: opens the street door ${auto_open_delay} after a street-door ring while
+  # "Auto Open" is on.
+  - id: auto_open_door
+    mode: restart
+    then:
+      - delay: ${auto_open_delay}
+      - if:
+          condition:
+            and:
+              - switch.is_on: auto_open
+              - not:
+                  script.is_running: open_door
+          then:
+            - logger.log: "Auto Open: opening the street door"
+            - script.execute: open_door
+
+  # BellBridge: switches "Auto Open" off again after "Auto Open Time" minutes; 0 keeps it
+  # on until it is switched off. Each start replaces a countdown that is still running.
+  - id: auto_open_timer
+    mode: restart
+    then:
+      - if:
+          condition:
+            lambda: 'return !(id(auto_open_time).state <= 0.0f);'
+          then:
+            - delay: !lambda |-
+                const float m = id(auto_open_time).state;
+                return (uint32_t) ((std::isnan(m) ? 30.0f : m) * 60000.0f);
+            - switch.turn_off: auto_open
 
 binary_sensor:
   # Raw bus signals, internal only. They drive the logic below and are
@@ -69,21 +147,7 @@ binary_sensor:
     filters:
       - delayed_on: 50ms
     on_press:
-      # Block the main-door signal that the bus fires right after.
-      - globals.set:
-          id: block_main_door_signal
-          value: 'true'
-      - binary_sensor.template.publish:
-          id: doorbell_apartment
-          state: ON
-      # Hold long enough for the Ritto tone to finish.
-      - delay: 4s
-      - binary_sensor.template.publish:
-          id: doorbell_apartment
-          state: OFF
-      - globals.set:
-          id: block_main_door_signal
-          value: 'false'
+      - script.execute: apartment_ring
 
   # Main-door bell (KLINGEL). A 5 V pulse on any ring lights OK2, which pulls
   # GPIO18 to ground.
@@ -104,13 +168,12 @@ binary_sensor:
             # Only fire when the apartment bell is not blocking.
             lambda: 'return !id(block_main_door_signal);'
           then:
-            - binary_sensor.template.publish:
-                id: doorbell_main
-                state: ON
-            - delay: 4s
-            - binary_sensor.template.publish:
-                id: doorbell_main
-                state: OFF
+            - script.execute: main_door_ring
+            - if:
+                condition:
+                  switch.is_on: auto_open
+                then:
+                  - script.execute: auto_open_door
 
   # Sensors exposed to Home Assistant.
   - platform: template
@@ -124,14 +187,25 @@ binary_sensor:
     icon: "mdi:doorbell"
 
 switch:
-  # Door opener (TUER, GPIO19 -> R1 -> OK1). Internal: driven only by the button
-  # below, never toggled directly from HA. R6 (100 k to GND) keeps the pin low
-  # while the module resets and boots, so the door does not buzz then.
+  # Door opener (TUER, GPIO19 -> R1 -> OK1). Internal: driven only by the scripts
+  # above, never toggled directly from HA. R6 (100 k to GND) holds the pin low from
+  # reset until this switch drives it, so the door does not buzz while the module boots.
   - platform: gpio
     pin: GPIO19  # BellBridge (XIAO D8)
     id: door_opener_relay
     internal: true
     restore_mode: ALWAYS_OFF
+
+  # BellBridge: while on, every street-door ring opens the door ${auto_open_delay} later.
+  # It turns itself off after "Auto Open Time" (0: never) and on every restart.
+  - platform: template
+    name: "Auto Open"
+    id: auto_open
+    icon: "mdi:account-clock"
+    optimistic: true
+    restore_mode: ALWAYS_OFF
+    turn_on_action:
+      - script.execute: auto_open_timer
 
 button:
   - platform: template
@@ -139,13 +213,55 @@ button:
     id: btn_door_open
     icon: "mdi:door-open"
     on_press:
+      # A press while the pulse runs is ignored.
       - if:
           condition:
-            switch.is_off: door_opener_relay
+            not:
+              script.is_running: open_door
           then:
-            - switch.turn_on: door_opener_relay
-            - delay: 500ms
-            - switch.turn_off: door_opener_relay
+            - script.execute: open_door
+
+  # BellBridge: diagnostics.
+  - platform: restart
+    name: "Restart"
+
+number:
+  # BellBridge: length of the door-opener pulse, kept across restarts.
+  - platform: template
+    name: "Door Open Duration"
+    id: door_open_duration
+    icon: "mdi:timer-outline"
+    entity_category: config
+    unit_of_measurement: s
+    mode: box
+    min_value: 0.2
+    max_value: 5
+    step: 0.1
+    initial_value: 0.5
+    optimistic: true
+    restore_value: true
+
+  # BellBridge: how long "Auto Open" stays on, in minutes; 0 = until it is switched off.
+  # A change while it is on starts the countdown again with the new time.
+  - platform: template
+    name: "Auto Open Time"
+    id: auto_open_time
+    icon: "mdi:timer-cog-outline"
+    entity_category: config
+    unit_of_measurement: min
+    mode: box
+    min_value: 0
+    max_value: 1440
+    step: 1
+    initial_value: 30
+    optimistic: true
+    restore_value: true
+    on_value:
+      - if:
+          condition:
+            switch.is_on: auto_open
+          then:
+            - script.execute: auto_open_timer
 
 sensor:
   # BellBridge: the module's PCB antenna replaces the XIAO's external antenna. Check the
@@ -154,3 +270,26 @@ sensor:
     name: "WiFi Signal"
     update_interval: 60s
     entity_category: diagnostic
+
+  # BellBridge: diagnostics.
+  - platform: uptime
+    name: "Uptime"
+    update_interval: 60s
+    entity_category: diagnostic
+
+  - platform: internal_temperature
+    name: "Chip Temperature"
+    update_interval: 60s
+    entity_category: diagnostic
+
+text_sensor:
+  # BellBridge: diagnostics.
+  - platform: wifi_info
+    ip_address:
+      name: "IP Address"
+    ssid:
+      name: "Connected SSID"
+
+  - platform: version
+    name: "ESPHome Version"
+    hide_timestamp: true

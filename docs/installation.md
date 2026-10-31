@@ -13,8 +13,8 @@ Flash and bench-test the board first ([firmware/README.md](../firmware/README.md
 
 - BellBridge, flashed and tested
 - a USB-C cable and a 5 V USB power supply (0.5 A is plenty)
-- four short wires, 26–16 AWG (solid or with ferrules); strip 5–6 mm for J1
-- a small screwdriver for J1's M2 screws (0.2 N·m)
+- four short wires, 26–18 AWG (up to 1.0 mm², solid or flexible), stripped 4–5 mm for J1
+- a small flat screwdriver for J1's M1.6 screws (at most 0.1 N·m)
 - double-sided foam tape or another insulating mount (the board has no mounting holes)
 - a multimeter
 
@@ -45,10 +45,15 @@ FLOOR, GND, as printed beside the terminal.
    behaves differently, stop and compare with the ritto-esp measurements.
 2. **Wire it.** Connect DOOR to 5, CHIME to 2, FLOOR to 4 and GND to 1 (or 6), as in the
    ritto-esp build. Check that no wire touches terminal 3 or a neighbouring contact.
-3. **Place the board.** Keep the antenna end (the edge where ANTENNA is printed, below the
-   module) away from metal back boxes and the bus wiring. Insulate the bottom side with foam
-   tape: the J1 pins and the USB shell lugs are exposed there. J1 stands 8.6 mm tall plus
-   the wires, and the USB-C plug needs room for its cable bend.
+3. **Place the board.** The module's antenna is the part beyond its metal shield that sticks
+   out 5.2 mm past the left edge, along its lower half. Espressif recommends at least 15 mm
+   of free space around it in all directions inside the housing: keep metal (back boxes,
+   mounting plates, the intercom's chassis), the housing wall and the bus wiring that far
+   away, and do not put the board in a metal box. Do not push, wedge or rest the board on
+   the antenna.
+   Insulate the bottom side with foam tape: the J1 pins, the USB shell lugs and the two
+   test pads are exposed there. J1 stands 8.4 mm tall plus the wires, and the USB-C plug
+   at the top edge needs room for its cable bend.
 4. **Power it** from the USB-C supply. Within a few seconds the node is online in Home
    Assistant.
 5. **Test it at the door** (section 4 of [testing.md](testing.md)). Then check that the

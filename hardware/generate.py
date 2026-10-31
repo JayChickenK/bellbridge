@@ -1,4 +1,4 @@
-# BellBridge v1.0: generator for the PCBWay-assembled Ritto 7630 TwinBus / ESP32-C6 board.
+# BellBridge v1.1: generator for the PCBWay-assembled Ritto 7630 TwinBus / ESP32-C6 board.
 # Writes the KiCad board, BOM and CPL and, when KiCad's DRC is clean, the PCBWay order zip.
 # Millimetres, KiCad 20240108. KiCad reads this file with the origin at the TOP left and Y
 # pointing DOWN: y = 0 is the top edge of the top view, y = BOARD_H the bottom edge. Footprints
@@ -13,6 +13,16 @@
 # and the buttons 0.12 mm lower, 8.6 mm KANGNEX WJ124-3.81 terminal instead of the 13.8 mm MKDS.
 # v1.0: KLEIN3 renamed to BellBridge, full-size first thermal pad as in Espressif's land,
 # silkscreen strokes 0.15 mm (PCBWay minimum), BOM with one line per part number.
+# v1.1: 31.4 x 27.5 mm instead of 36.4 x 31.5. SO-4 optocouplers (LTV-357T-C) without a
+# slot, 1210 input resistors, 0603 passives, 2.54 mm terminal (DORABO DB125), no buttons
+# (BOOT and GND test pads on the back), USB-C opening at the top edge above the module, USB
+# ESD array as USBLC6-2P6 (SOT-666) in the D+/D- path between the receptacle and the module.
+# USB-C signal pads and board-edge position as in HRO's 2020 drawing. Module turned 90 degrees
+# after Espressif's ESP32-C6 module placement guide: antenna past the left edge, feed end at the
+# board's lower-left corner; the board itself is 26.2 x 27.5 mm. Layout review: no signal copper
+# under the USB-C shell's steel plate (CC1 on the back), thermal spokes on the 0603 ground pads,
+# a second VBUS via next to the regulator. Part-fit review: USB-C front lug slots 1.4 mm long
+# as in HRO's drawing (KiCad's library: 1.2 mm).
 
 from __future__ import annotations
 
@@ -29,33 +39,44 @@ import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-NAME, VERSION = "BellBridge", "1.0"
+NAME, VERSION = "BellBridge", "1.1"
 SLUG = NAME.lower()
-BOARD_W = 36.4
-BOARD_H = 31.5
+BOARD_W = 31.4
+BOARD_H = 27.5
 CLEARANCE = 0.20
 EDGE_COPPER = 0.45
 M3_COPPER = 0.55
-# Slot crosses the optocoupler bodies only. The 2512s and the terminal stay to its right.
-SLOT = (11.0, 5.40, 25.4, 6.90)  # x0, y0, x1, y1
-# U1 sits at (14.80, 23.10); its antenna section starts 2.9 mm past the centre (y = 26.0).
-# The official footprint asks for 15 mm of clear board on each side. That does not fit, so
-# no copper and no parts on either layer across the whole MCU width below y = 26.0.
-ANT = (0.0, 26.00, 30.40, 31.5)
+# The SO-4 optocouplers need no milled slot.
+SLOT = None
+# Espressif's ESP32-C6 hardware design guidelines (1.4.7, figures 23-25): the module's PCB
+# antenna outside the base board, its feed point at the board edge. The MINI-1's feed is at its
+# pin-1 end, so U1 is turned 90 degrees (antenna pointing left, figure 24 position 5): the
+# antenna sticks out past the left edge of the board and the feed end of the module (pins 1-11)
+# runs along the bottom edge, 2.0 mm from it (the guide allows 2 mm), with room for the pin-3
+# capacitors. The board starts at BOARD_X0, 0.2 mm into the antenna section and 0.5 mm from the
+# module's last pads; x = 0 is the antenna tip. BOARD_W and BOARD_H are the overall size with
+# the antenna. ANT is the antenna section: no copper there on either layer.
+U1_X, U1_Y = 8.30, 18.90
+BOARD_X0 = round(U1_X - 3.10, 3)
+ANT = (0.0, round(U1_Y - 6.6, 3), round(U1_X - 2.9, 3), round(U1_Y + 6.6, 3))
 # Isolation barrier: centre line of a copper-free strip between the two grounds. GND_MCU
-# copper stays ISO_HALF to one side, bus copper ISO_HALF to the other, on both layers.
-# Top edge -> left of OK1 pin 4 -> down into the slot -> along it -> round R3 -> right side.
-BARRIER = (
-    (9.45, 0.0), (9.45, 3.12), (11.40, 3.12), (11.40, 6.15), (26.35, 6.15),
-    (26.35, 9.40), (30.75, 9.40), (30.75, BOARD_H),
-)
+# copper stays ISO_HALF to the left of it, bus copper ISO_HALF to the right, on both layers.
+# It runs straight down through the optocoupler column, between the LED and transistor pads.
+XB = 23.45
+BARRIER = ((XB, 0.0), (XB, BOARD_H))
 ISO_HALF = 0.80
 BUS_NETS = ("GND_BUS", "DOOR", "CHIME", "FLOOR", "LED_CHIME", "LED_FLOOR")
 # Pin-1 dots on F.SilkS. place_pin1_dots() puts each one at the nearest spot that check_silk()
 # accepts, after routing; check_silk() re-checks them, including that pin 1 is clearly the
-# nearest pin of the part. U1's pads 49-53 are ground pads, not pins.
+# nearest pin of the part. U1's pads 49-53 are ground pads, not pins. Pin 1 must be nearer
+# than any other pin by 0.3 mm; U3 (SOT-666, 0.54 mm pitch, wider middle pads, boxed in
+# between the J2 and U1 courtyards) gets 0.1 mm, with its dot at the corner beside pin 1.
 PIN1_REFS = ("U1", "U2", "U3", "OK1", "OK2", "OK3")
 PIN_MAX = {"U1": 48}
+PIN1_MARGIN = {"U3": 0.10}
+# Package bodies (local frame) that a part's own dot must stay off, where the ring search could
+# otherwise land between the pad columns: U3's channel is under its body.
+PIN1_BODY = {"U3": (-0.65, -0.85, 0.65, 0.85)}
 PIN1_DOTS: list[tuple[str, float, float]] = []
 DOT_R, DOT_W = 0.20, 0.15
 
@@ -188,6 +209,47 @@ def via(net, x, y, size=0.65, drill=0.30):
     VIAS.append(Via(net, x, y, size, drill))
 
 
+def silk_notes():
+    # Name and warnings: (text, x, y, character width, layer, rotation). "NO +24V" on the front
+    # below J1; name and "GND ISOLATED" upright on the back of the bus side, reading upward.
+    # Front text runs to +x from its anchor; back text is mirrored and right-justified, so it
+    # also runs to +x in the top view, or toward -y when turned 90 degrees.
+    j1 = next(q for q in PARTS if q.ref == "J1")
+    yb = j1.y + 3 * TB_PITCH + TB_END
+    return [
+        ("NO +24V", XB + ISO_HALF + 0.55, round(yb + 1.0, 2), 0.65, "F.SilkS", 0),
+        (f"{NAME} v{VERSION}", 30.35, 13.40, 0.7, "B.SilkS", 90),
+        ("GND ISOLATED", 29.05, 13.40, 0.6, "B.SilkS", 90),
+    ]
+
+
+def _note_box(text, x, y, width, rot):
+    # Top-view box of a note: about width + 0.1 mm per character, 0.8 mm high, 0.15 mm margin.
+    length = (width + 0.1) * len(text)
+    if rot == 90:
+        return (x - 0.55, y - length - 0.15, x + 0.55, y + 0.15)
+    return (x - 0.15, y - 0.55, x + length + 0.15, y + 0.55)
+
+
+def label_boxes():
+    # Silkscreen labels that no via may sit under (a via under a 0.8 mm letter breaks it): the
+    # J1 terminal names on the front and the test-pad labels on the back. About 0.6 mm per
+    # character at 0.8 mm height, plus 0.15 mm all round. Top-view coordinates.
+    boxes = []
+    j1 = next(q for q in PARTS if q.ref == "J1")
+    xr = j1.x - TB_BACK - 0.25
+    for name, pin in (("DOOR", "1"), ("CHIME", "2"), ("FLOOR", "3"), ("GND", "4")):
+        y = pads_of("J1", pin)[0].y
+        boxes.append((xr - 0.6 * len(name) - 0.15, y - 0.55, xr + 0.15, y + 0.55))
+    for ref, label in (("TP1", "BOOT"), ("TP2", "GND")):
+        q = pads_of(ref)[0]
+        x0 = q.x + 1.15
+        boxes.append((x0 - 0.15, q.y - 0.55, x0 + 0.6 * len(label) + 0.15, q.y + 0.55))
+    for text, x, y, width, _layer, rot in silk_notes():
+        boxes.append(_note_box(text, x, y, width, rot))
+    return boxes
+
+
 def pads_of(ref, pin=None, net=None):
     out = []
     for p in PADS:
@@ -207,18 +269,6 @@ def at(ref, pin, n=0):
     return p.x, p.y
 
 
-def closest(ref, net, x, y):
-    hit = pads_of(ref, net=net)
-    return min(hit, key=lambda p: (p.x - x) ** 2 + (p.y - y) ** 2)
-
-
-def r_pads(net1, net2):
-    return [
-        {"pin": "1", "x": -0.9125, "y": 0, "sx": 1.025, "sy": 1.4, "net": net1},
-        {"pin": "2", "x": 0.9125, "y": 0, "sx": 1.025, "sy": 1.4, "net": net2},
-    ]
-
-
 def r0603_pads(net1, net2):
     # KiCad R_0603_1608Metric.
     return [
@@ -227,45 +277,36 @@ def r0603_pads(net1, net2):
     ]
 
 
-def c_pads(net1, net2):
-    return [
-        {"pin": "1", "x": -0.95, "y": 0, "sx": 1.0, "sy": 1.45, "net": net1},
-        {"pin": "2", "x": 0.95, "y": 0, "sx": 1.0, "sy": 1.45, "net": net2},
-    ]
-
-
-def r2512(net1, net2):
-    return [
-        {"pin": "1", "x": -2.9625, "y": 0, "sx": 1.225, "sy": 3.35, "net": net1},
-        {"pin": "2", "x": 2.9625, "y": 0, "sx": 1.225, "sy": 3.35, "net": net2},
-    ]
-
-
 def opto_pads(n1, n2, n3, n4):
-    # KiCad Package_DIP:SMDIP-4_W9.53mm_Clearance8mm: 1.5 mm pads, 8 mm between the pad rows.
+    # KiCad Package_SO:SO-4_4.4x3.6mm_P2.54mm (Lite-On LTV-357T): 1 anode, 2 cathode,
+    # 3 emitter, 4 collector; 4.3 mm between the LED and the transistor pad rows.
     return [
-        {"pin": "1", "x": -4.765, "y": -1.27, "sx": 1.5, "sy": 1.78, "net": n1},
-        {"pin": "2", "x": -4.765, "y": 1.27, "sx": 1.5, "sy": 1.78, "net": n2},
-        {"pin": "3", "x": 4.765, "y": 1.27, "sx": 1.5, "sy": 1.78, "net": n3},
-        {"pin": "4", "x": 4.765, "y": -1.27, "sx": 1.5, "sy": 1.78, "net": n4},
+        {"pin": "1", "x": -3.15, "y": -1.27, "sx": 2.0, "sy": 0.64, "net": n1},
+        {"pin": "2", "x": -3.15, "y": 1.27, "sx": 2.0, "sy": 0.64, "net": n2},
+        {"pin": "3", "x": 3.15, "y": 1.27, "sx": 2.0, "sy": 0.64, "net": n3},
+        {"pin": "4", "x": 3.15, "y": -1.27, "sx": 2.0, "sy": 0.64, "net": n4},
     ]
 
 
-def button_pads(gnd, sig, gnd_corner="TL"):
-    # Pad numbers as in KiCad's SW_Push_1P1T_XKB_TS-1187A: the two pads at the same y share a
-    # number. Which pairs the switch joins inside was not confirmed against the XKB drawing,
-    # so only two diagonal pads carry nets and nothing ties a pair in copper. Diagonal pads
-    # sit in different pairs either way, so the switch works and never shorts sig to ground.
-    # gnd_corner names the local corner (TL, TR, BL, BR) that carries GND; sig goes diagonally
-    # opposite and the other two pads get no net.
-    opposite = {"TL": "BR", "TR": "BL", "BL": "TR", "BR": "TL"}
-    nets = {gnd_corner: gnd, opposite[gnd_corner]: sig}
+def r1210_pads(net1, net2):
+    # KiCad R_1210_3225Metric.
     return [
-        {"pin": "1", "x": -3.0, "y": -1.875, "sx": 1.0, "sy": 0.75, "net": nets.get("TL", "")},
-        {"pin": "1", "x": 3.0, "y": -1.875, "sx": 1.0, "sy": 0.75, "net": nets.get("TR", "")},
-        {"pin": "2", "x": -3.0, "y": 1.875, "sx": 1.0, "sy": 0.75, "net": nets.get("BL", "")},
-        {"pin": "2", "x": 3.0, "y": 1.875, "sx": 1.0, "sy": 0.75, "net": nets.get("BR", "")},
+        {"pin": "1", "x": -1.4625, "y": 0, "sx": 1.125, "sy": 2.65, "net": net1},
+        {"pin": "2", "x": 1.4625, "y": 0, "sx": 1.125, "sy": 2.65, "net": net2},
     ]
+
+
+def c0603_pads(net1, net2):
+    # KiCad C_0603_1608Metric.
+    return [
+        {"pin": "1", "x": -0.775, "y": 0, "sx": 0.9, "sy": 0.95, "net": net1},
+        {"pin": "2", "x": 0.775, "y": 0, "sx": 0.9, "sy": 0.95, "net": net2},
+    ]
+
+
+def test_pad(net):
+    # KiCad TestPoint_Pad_D1.5mm, on the back: copper and mask only, nothing to assemble.
+    return [{"pin": "1", "x": 0, "y": 0, "sx": 1.5, "sy": 1.5, "net": net, "layer": "B", "round": True}]
 
 
 def sot23_5_pads(vin, gnd, en, vout):
@@ -279,26 +320,28 @@ def sot23_5_pads(vin, gnd, en, vout):
     ]
 
 
-def usblc6_pads(io1, io2, gnd, vbus):
-    # KiCad Package_TO_SOT_SMD:SOT-23-6. USBLC6-2SC6: 1 I/O1, 2 GND, 3 I/O2, 4 I/O2, 5 VBUS,
-    # 6 I/O1; 1/6 and 3/4 are joined inside the package. Pin 4 carries no net here: the ground
-    # track leaves pin 2 through the gap between 3 and 4, so it is reached through pin 3.
+def usblc6_p6_pads(io1, gnd, io2, vbus):
+    # KiCad Package_TO_SOT_SMD:SOT-666. USBLC6-2P6: 1 I/O1, 2 GND, 3 I/O2, 4 I/O2, 5 VBUS,
+    # 6 I/O1; 1/6 and 3/4 are joined inside the package. D+ runs through pin 1 and D- taps
+    # pin 4, both in the 1.2 mm channel between the pad columns, so pins 6 and 3 stay bare.
     return [
-        {"pin": "1", "x": -1.1375, "y": -0.95, "sx": 1.325, "sy": 0.6, "net": io1},
-        {"pin": "2", "x": -1.1375, "y": 0.0, "sx": 1.325, "sy": 0.6, "net": gnd},
-        {"pin": "3", "x": -1.1375, "y": 0.95, "sx": 1.325, "sy": 0.6, "net": io2},
-        {"pin": "4", "x": 1.1375, "y": 0.95, "sx": 1.325, "sy": 0.6, "net": ""},
-        {"pin": "5", "x": 1.1375, "y": 0.0, "sx": 1.325, "sy": 0.6, "net": vbus},
-        {"pin": "6", "x": 1.1375, "y": -0.95, "sx": 1.325, "sy": 0.6, "net": io1},
+        {"pin": "1", "x": -0.85, "y": -0.5375, "sx": 0.5, "sy": 0.375, "net": io1},
+        {"pin": "2", "x": -0.925, "y": 0.0, "sx": 0.65, "sy": 0.3, "net": gnd},
+        {"pin": "3", "x": -0.85, "y": 0.5375, "sx": 0.5, "sy": 0.375, "net": ""},
+        {"pin": "4", "x": 0.85, "y": 0.5375, "sx": 0.5, "sy": 0.375, "net": io2},
+        {"pin": "5", "x": 0.925, "y": 0.0, "sx": 0.65, "sy": 0.3, "net": vbus},
+        {"pin": "6", "x": 0.85, "y": -0.5375, "sx": 0.5, "sy": 0.375, "net": ""},
     ]
 
 
-# KANGNEX WJ124-3.81-04P-14-00A (customer drawing rev A, 2024-03-10): pitch 3.81, holes 1.30,
-# body 7.30 deep and 8.60 high, pin row 3.60 from the back and 3.70 from the wire face, outer
-# pins 2.31 from the body ends (dovetail tabs included). Local frame: pins along +X from pin 1,
-# wire face at -Y. Pads 2.3 mm (0.5 mm ring).
-TB_PITCH, TB_DRILL, TB_PAD = 3.81, 1.30, 2.3
-TB_BACK, TB_FRONT, TB_END = 3.60, 3.70, 2.31
+# DORABO DB125-2.54-04P-GN-S (drawing DB125-2.54-XXP-C-S, 2022-04-06): pitch 2.54, holes
+# 1.20, pins 0.50 x 0.85, body N x 2.54 + 0.48 long (outer pins 1.51 from the ends), 6.30
+# deep, 8.40 high. The side view (third-angle projection) puts the pin row 3.10 from the wire
+# face and 3.20 from the back. Wires 26-18 AWG, strip 4-5 mm, M1.6 screws, 0.1 N*m max.
+# Local frame: pins along +X from pin 1, wire face at -Y. Pads 2.0 mm (0.4 mm ring, 0.54 mm
+# between pads).
+TB_PITCH, TB_DRILL, TB_PAD = 2.54, 1.20, 2.0
+TB_BACK, TB_FRONT, TB_END = 3.20, 3.10, 1.51
 
 
 def terminal_pads(nets):
@@ -360,36 +403,55 @@ def module_pads():
     return pads
 
 
+# HRO TYPE-C-31-M-12 signal pads, from HRO's drawing (2020-12-08, "recommend P.C.B layout"):
+# 0.30/0.60 mm wide, from 0.50 to 1.64 mm behind the line through the two locating holes.
+# KiCad's library footprint has them 1.45 mm long and about 0.5 mm further back; the lead tips
+# end 0.40 mm behind the body, so HRO's pads also cover the leads under the body edge.
+USB_HOLE_Y = -2.60
+# HRO TYPE-C-31-M-12: the steel bottom plate of the shell runs 6.28 mm back from the front
+# face (local +y 3.65); behind it, where the pins leave, the underside is the plastic body.
+USB_FRONT_Y, USB_SHELL_LEN = 3.65, 6.28
+# Ground pads of the 0603 parts join the pours through thermal spokes instead of solid
+# copper, so both ends of each part heat alike in reflow (less tombstoning). The module and
+# the other SMD ground pads stay solid.
+THERMAL_RELIEF_REFS = ("C1", "C2", "C3", "C4", "C5", "C6", "C7", "R6", "R7", "R10")
+USB_PAD_Y, USB_PAD_LEN = USB_HOLE_Y - (0.50 + 1.64) / 2.0, 1.64 - 0.50
+
+
 def usb_pads():
-    # HRO TYPE-C-31-M-12, KiCad USB_C_Receptacle_HRO_TYPE-C-31-M-12. The solder pads are at the
-    # back of the receptacle (local y = -4.045); the body runs -3.65..+3.65 and the cable
-    # opening is local +Y. Rotation 270 turns +Y to -X, so the opening faces the left edge.
+    # HRO TYPE-C-31-M-12. Shell-lug slots as HRO's drawing: 0.6 x 1.7 mm for the 1.10 mm lugs
+    # beside the pad row, 0.6 x 1.4 mm for the 0.80 mm lugs near the opening (KiCad's library:
+    # 1.2 mm), both 0.6 mm longer than the lug; pads with KiCad's 0.2 mm ring (HRO: 0.90 mm
+    # pads). Signal pads and the 0.60 mm locating holes (KiCad: 0.65 mm) as HRO recommends.
+    # The body runs -3.65..+3.65 and the cable opening is local +Y. Rotation 180 turns +Y to
+    # -Y, so the opening faces the top edge.
+    # HRO places the 0.60 mm power and ground pads at +-2.40 and +-3.20 (KiCad: +-2.45, +-3.25).
     spec = [
-        ("A1", -3.25, "GND_MCU", 0.6),
-        ("A4", -2.45, "VBUS", 0.6),
+        ("A1", -3.20, "GND_MCU", 0.6),
+        ("A4", -2.40, "VBUS", 0.6),
         ("A5", -1.25, "CC1", 0.3),
         ("A6", -0.25, "USB_DP", 0.3),
         ("A7", 0.25, "USB_DM", 0.3),
         ("A8", 1.25, "", 0.3),
-        ("A9", 2.45, "VBUS", 0.6),
-        ("A12", 3.25, "GND_MCU", 0.6),
-        ("B12", -3.25, "GND_MCU", 0.6),
-        ("B9", -2.45, "VBUS", 0.6),
+        ("A9", 2.40, "VBUS", 0.6),
+        ("A12", 3.20, "GND_MCU", 0.6),
+        ("B12", -3.20, "GND_MCU", 0.6),
+        ("B9", -2.40, "VBUS", 0.6),
         ("B8", -1.75, "", 0.3),
         ("B7", -0.75, "USB_DM", 0.3),
         ("B6", 0.75, "USB_DP", 0.3),
         ("B5", 1.75, "CC2", 0.3),
-        ("B4", 2.45, "VBUS", 0.6),
-        ("B1", 3.25, "GND_MCU", 0.6),
+        ("B4", 2.40, "VBUS", 0.6),
+        ("B1", 3.20, "GND_MCU", 0.6),
     ]
     pads = []
     for pin, x, net, sx in spec:
-        pads.append({"pin": pin, "x": x, "y": -4.045, "sx": sx, "sy": 1.45, "net": net})
+        pads.append({"pin": pin, "x": x, "y": USB_PAD_Y, "sx": sx, "sy": USB_PAD_LEN, "net": net})
     shells = [
         (-4.32, -3.13, 1.0, 2.1, 0.6, 1.7),
-        (-4.32, 1.05, 1.0, 1.6, 0.6, 1.2),
+        (-4.32, 1.05, 1.0, 1.8, 0.6, 1.4),
         (4.32, -3.13, 1.0, 2.1, 0.6, 1.7),
-        (4.32, 1.05, 1.0, 1.6, 0.6, 1.2),
+        (4.32, 1.05, 1.0, 1.8, 0.6, 1.4),
     ]
     for x, y, sx, sy, dx, dy in shells:
         pads.append(
@@ -412,12 +474,12 @@ def usb_pads():
             {
                 "pin": "",
                 "x": x,
-                "y": -2.6,
-                "sx": 0.65,
-                "sy": 0.65,
+                "y": USB_HOLE_Y,
+                "sx": 0.60,
+                "sy": 0.60,
                 "net": "",
                 "layer": "*",
-                "drill": 0.65,
+                "drill": 0.60,
                 "npth": True,
                 "round": True,
             }
@@ -426,86 +488,96 @@ def usb_pads():
 
 
 def place_all():
-    # Antenna toward high file-Y (rot 180), 0.1 mm short of the edge. USB opening at the left
-    # edge (rot 270, front 0.25 mm past the edge). Terminal on the right edge (rot 270), wire
-    # face toward +X, 1.15 mm past the edge. No mounting holes. Nothing sits beside the
-    # antenna (y > ANT[1]). Left column, top to bottom: R7/R10 and U3, J2, SW2, SW1; the
-    # courtyards touch, SW1 ends 0.7 mm above the antenna strip.
+    # 31.4 x 27.5 mm overall; the board itself runs from BOARD_X0 to the right edge. U1 in the
+    # lower left, turned 90 degrees: antenna out past the left edge, pins 1-11 (3V3, EN) along
+    # the bottom, USB and GPIO8/9/18 on its right side, GPIO19/20 on its top side. J2 at the top
+    # edge (rot 180, front 0.46 mm past the edge), the ESD array and the CC pull-downs between
+    # J2 and the module. Right of the module a column with the GPIO8 pull-up, the EN network and
+    # the regulator; the pin-3 capacitors and the output capacitors in a strip along the bottom.
+    # Then a column of resistors beside the optocouplers, which stand in a column on the
+    # barrier (x = XB): OK1 with its LED on the MCU side, OK2/OK3 with theirs on the bus side.
+    # Bus side: input resistors beside OK2/OK3, terminal below.
     add_part(
         "U1", "ESP32-C6-MINI-1-N4", "ESP32-C6-MINI-1",
-        14.80, 23.10, 180, module_pads(), "smd",
+        U1_X, U1_Y, 90, module_pads(), "smd",
         "Espressif", "ESP32-C6-MINI-1-N4", "C5736265",
         (-6.8, -8.5, 6.8, 8.5),
     )
-    # LDO that is stable with ceramic capacitors; replaces AMS1117 + damper branch.
+    add_part(
+        "J2", "USB-C", "USB_C_HRO_TYPE-C-31-M-12",
+        10.75, 3.19, 180, usb_pads(), "smd",
+        "HRO", "TYPE-C-31-M-12", "C165948",
+        (-5.32, USB_PAD_Y - USB_PAD_LEN / 2 - 0.50, 5.32, 4.15),
+    )
+    # ESD array right under the receptacle's pad row, before the lines leave for the module.
+    # Courtyard 0.1 mm around the body. KiCad's SOT-666 land, not ST's (0.30 x 0.99 mm pads
+    # 0.62 mm apart): both cover the leads, and only KiCad's leaves room for D+ and D- between
+    # the pad columns.
+    add_part(
+        "U3", "USBLC6-2P6", "SOT-666",
+        10.95, 9.63, 0, usblc6_p6_pads("USB_DP", "GND_MCU", "USB_DM", "VBUS"),
+        "smd", "STMicroelectronics", "USBLC6-2P6", "C15999",
+        (-1.5, -0.95, 1.5, 0.95),
+    )
+    oc = (-4.4, -2.05, 4.4, 2.05)
+    lite = ("smd", "Lite-On", "LTV-357T-C", "C119091", oc)
+    add_part("OK1", "LTV-357T", "SO-4_4.4x3.6mm_P2.54mm", XB, 2.55, 0,
+             opto_pads("LED_DOOR", "GND_MCU", "GND_BUS", "DOOR"), *lite)
+    add_part("OK2", "LTV-357T", "SO-4_4.4x3.6mm_P2.54mm", XB, 6.95, 180,
+             opto_pads("LED_CHIME", "GND_BUS", "GND_MCU", "GPIO18"), *lite)
+    add_part("OK3", "LTV-357T", "SO-4_4.4x3.6mm_P2.54mm", XB, 11.35, 180,
+             opto_pads("LED_FLOOR", "GND_BUS", "GND_MCU", "GPIO20"), *lite)
+    add_part(
+        "J1", "2.54mm 4P", "TerminalBlock_DORABO_DB125-2.54_1x04_P2.54mm",
+        29.20, 16.00, 270, terminal_pads(("DOOR", "CHIME", "FLOOR", "GND_BUS")),
+        "through_hole", "DORABO", "DB125-2.54-4P-GN-S", "C918122",
+        (-TB_END - 0.25, -TB_FRONT - 0.25, 3 * TB_PITCH + TB_END + 0.25, TB_BACK + 0.25),
+    )
+    uni = "UNI-ROYAL"
+    c6 = (-1.48, -0.73, 1.48, 0.73)
+    rc12 = (-2.28, -1.58, 2.28, 1.58)
+    yag = ("smd", "YAGEO", "RC1210FR-071K5L", "C309587", rc12)
+    add_part("R2", "1.5k 0.5W", "R_1210", 29.43, 7.00, 90, r1210_pads("LED_CHIME", "CHIME"), *yag)
+    add_part("R3", "1.5k 0.5W", "R_1210", 29.43, 11.85, 90, r1210_pads("LED_FLOOR", "FLOOR"), *yag)
+    # CC pull-downs: CC2 left of the ESD array, CC1 upright between the receptacle and the
+    # resistor column (its line comes round on the back, below the receptacle).
+    add_part("R10", "5.1k", "R_0603", 7.85, 9.63, 0, r0603_pads("GND_MCU", "CC2"), "smd", uni, "0603WAF5101T5E", "C23186", c6)
+    add_part("R7", "5.1k", "R_0603", 16.81, 4.00, 90, r0603_pads("GND_MCU", "CC1"), "smd", uni, "0603WAF5101T5E", "C23186", c6)
+    # Column beside the optocouplers' MCU pads: LED resistor, GPIO19 pull-down, pull-ups. R4 is
+    # turned so that its 3V3 pad faces R5's.
+    add_part("R1", "220", "R_0603", 18.29, 1.90, 90, r0603_pads("GPIO19", "LED_DOOR"), "smd", uni, "0603WAF2200T5E", "C22962", c6)
+    add_part("R6", "100k", "R_0603", 18.29, 5.15, 90, r0603_pads("GND_MCU", "GPIO19"), "smd", uni, "0603WAF1003T5E", "C25803", c6)
+    add_part("R4", "10k", "R_0603", 18.29, 8.40, 270, r0603_pads("GPIO18", "3V3"), "smd", uni, "0603WAF1002T5E", "C25804", c6)
+    add_part("R5", "10k", "R_0603", 18.29, 11.65, 90, r0603_pads("GPIO20", "3V3"), "smd", uni, "0603WAF1002T5E", "C25804", c6)
+    # Column right of the module: GPIO8 pull-up level with pin 22, the EN network (pin 8 is on
+    # the bottom side; its line comes over on the back) and the regulator's input capacitor.
+    add_part("R12", "10k", "R_0603", 19.60, 15.80, 0, r0603_pads("GPIO8", "3V3"), "smd", uni, "0603WAF1002T5E", "C25804", c6)
+    add_part("R8", "10k", "R_0603", 19.60, 17.30, 0, r0603_pads("EN", "3V3"), "smd", uni, "0603WAF1002T5E", "C25804", c6)
+    sam = "Samsung"
+    add_part("C6", "1uF", "C_0603", 19.60, 18.80, 0, c0603_pads("EN", "GND_MCU"), "smd", sam, "CL10A105KB8NNNC", "C15849", c6)
+    add_part("C4", "100nF", "C_0603", 19.60, 20.30, 0, c0603_pads("GND_MCU", "VBUS"), "smd", sam, "CL10B104KB8NNNC", "C1591", c6)
     add_part(
         "U2", "AP2112K-3.3", "SOT-23-5",
-        27.15, 21.60, 180, sot23_5_pads("VBUS", "GND_MCU", "VBUS", "3V3"),
+        20.00, 22.80, 180, sot23_5_pads("VBUS", "GND_MCU", "VBUS", "3V3"),
         "smd", "Diodes Incorporated", "AP2112K-3.3TRG1", "C51118",
         (-2.05, -1.84, 2.05, 1.7),
     )
-    add_part(
-        "J2", "USB-C", "USB_C_HRO_TYPE-C-31-M-12",
-        3.40, 8.75, 270, usb_pads(), "smd",
-        "HRO", "TYPE-C-31-M-12", "C165948",
-        (-5.32, -5.27, 5.32, 4.15),
-    )
-    # OK1 LED on the MCU side (rot 90). OK2/OK3 LEDs on the bus side (rot 270).
-    add_part(
-        "OK1", "LTV-817S", "SMDIP-4_W9.53mm_Clearance8mm",
-        12.45, 6.33, 90, opto_pads("LED_DOOR", "GND_MCU", "GND_BUS", "DOOR"),
-        "smd", "Lite-On", "LTV-817S-TA1-C", "C109227", (-5.77, -2.79, 5.77, 2.79),
-    )
-    add_part(
-        "OK2", "LTV-817S", "SMDIP-4_W9.53mm_Clearance8mm",
-        18.23, 6.33, 270, opto_pads("LED_CHIME", "GND_BUS", "GND_MCU", "GPIO18"),
-        "smd", "Lite-On", "LTV-817S-TA1-C", "C109227", (-5.77, -2.79, 5.77, 2.79),
-    )
-    add_part(
-        "OK3", "LTV-817S", "SMDIP-4_W9.53mm_Clearance8mm",
-        24.01, 6.33, 270, opto_pads("LED_FLOOR", "GND_BUS", "GND_MCU", "GPIO20"),
-        "smd", "Lite-On", "LTV-817S-TA1-C", "C109227", (-5.77, -2.79, 5.77, 2.79),
-    )
-    # ESD array for D+/D-/VBUS in the corner above J2: stubs from the J2 pads, ground straight
-    # to the shell lug (see route()).
-    add_part(
-        "U3", "USBLC6-2SC6", "SOT-23-6",
-        6.40, 1.72, 0, usblc6_pads("USB_DP", "USB_DM", "GND_MCU", "VBUS"),
-        "smd", "STMicroelectronics", "USBLC6-2SC6", "C7519",
-        (-2.05, -1.7, 2.05, 1.7),
-    )
-    add_part(
-        "J1", "3.81mm 4P", "TerminalBlock_Kangnex_WJ124-3.81_1x04_P3.81mm",
-        33.85, 12.00, 270, terminal_pads(("DOOR", "CHIME", "FLOOR", "GND_BUS")),
-        "through_hole", "KANGNEX", "WJ124-3.81-04P-14-00A", "C69809",
-        (-TB_END - 0.25, -TB_FRONT - 0.25, 3 * TB_PITCH + TB_END + 0.25, TB_BACK + 0.25),
-    )
-    rc = (-1.68, -0.95, 1.68, 0.95)
-    cc = (-1.7, -0.98, 1.7, 0.98)
-    uni = "UNI-ROYAL"
-    add_part("R2", "1.5k 1W", "R_2512", 30.95, 2.65, 0, r2512("LED_CHIME", "CHIME"), "smd", "FH", "RC-12K1501FT", "C453383", (-3.83, -1.93, 3.83, 1.93))
-    add_part("R3", "1.5k 1W", "R_2512", 30.95, 6.75, 0, r2512("LED_FLOOR", "FLOOR"), "smd", "FH", "RC-12K1501FT", "C453383", (-3.83, -1.93, 3.83, 1.93))
-    # Row between the optocouplers and the module.
-    add_part("R1", "220", "R_0805", 10.45, 13.10, 180, r_pads("LED_DOOR", "GPIO19"), "smd", uni, "0805W8F2200T5E", "C17557", rc)
-    add_part("R12", "10k", "R_0805", 13.85, 13.10, 0, r_pads("GPIO8", "3V3"), "smd", uni, "0805W8F1002T5E", "C17414", rc)
-    add_part("R4", "10k", "R_0805", 18.60, 13.10, 180, r_pads("GPIO18", "3V3"), "smd", uni, "0805W8F1002T5E", "C17414", rc)
-    add_part("R9", "10k", "R_0805", 22.55, 14.03, 90, r_pads("3V3", "GPIO9"), "smd", uni, "0805W8F1002T5E", "C17414", rc)
-    add_part("R5", "10k", "R_0805", 24.50, 14.03, 90, r_pads("3V3", "GPIO20"), "smd", uni, "0805W8F1002T5E", "C17414", rc)
-    add_part("R6", "100k", "R_0805", 26.45, 14.03, 90, r_pads("GND_MCU", "GPIO19"), "smd", uni, "0805W8F1003T5E", "C149504", rc)
-    # CC pull-downs above the receptacle, 0603 so that U3 fits beside them.
-    r6c = (-1.48, -0.73, 1.48, 0.73)
-    add_part("R7", "5.1k", "R_0603", 1.70, 0.94, 0, r0603_pads("GND_MCU", "CC1"), "smd", uni, "0603WAF5101T5E", "C23186", r6c)
-    add_part("R10", "5.1k", "R_0603", 1.70, 2.42, 0, r0603_pads("GND_MCU", "CC2"), "smd", uni, "0603WAF5101T5E", "C23186", r6c)
-    # EN network at module pin 8, decoupling at pin 3, regulator column beside it.
-    add_part("R8", "10k", "R_0805", 23.30, 16.85, 0, r_pads("EN", "3V3"), "smd", uni, "0805W8F1002T5E", "C17414", rc)
-    add_part("C6", "1uF", "C_0805", 23.30, 18.80, 0, c_pads("EN", "GND_MCU"), "smd", "Samsung", "CL21B105KBFNNNE", "C28323", cc)
-    add_part("C5", "100nF", "C_0805", 23.30, 22.80, 0, c_pads("3V3", "GND_MCU"), "smd", "Samsung", "CL21B104KBFNNNE", "C136621", cc)
-    add_part("C2", "10uF", "C_0805", 23.30, 24.80, 0, c_pads("3V3", "GND_MCU"), "smd", "Samsung", "CL21A106KOQNNNE", "C1713", cc)
-    add_part("C4", "100nF", "C_0805", 27.15, 16.90, 180, c_pads("VBUS", "GND_MCU"), "smd", "Samsung", "CL21B104KBFNNNE", "C136621", cc)
-    add_part("C1", "10uF", "C_0805", 27.15, 18.87, 180, c_pads("VBUS", "GND_MCU"), "smd", "Samsung", "CL21A106KOQNNNE", "C1713", cc)
-    add_part("C3", "10uF", "C_0805", 27.15, 24.70, 0, c_pads("3V3", "GND_MCU"), "smd", "Samsung", "CL21A106KOQNNNE", "C1713", cc)
-    add_part("SW2", "BOOT", "SW_TS-1187A", 4.00, 16.87, 0, button_pads("GND_MCU", "GPIO9", "BL"), "smd", "XKB", "TS-1187A-B-A-B", "C318884", (-3.75, -2.8, 3.75, 2.8))
-    add_part("SW1", "RESET", "SW_TS-1187A", 4.00, 22.47, 0, button_pads("GND_MCU", "EN", "BL"), "smd", "XKB", "TS-1187A-B-A-B", "C318884", (-3.75, -2.8, 3.75, 2.8))
+    # Strip along the bottom edge, below the module's pins 1-11: 100 nF under pin 3 (its ground
+    # pad toward the module's ground pins 1 and 2), 10 uF beside it, the regulator's output and input capacitors at the right. The 3V3 trunk
+    # runs between these and the module's pins.
+    ys = 26.55
+    add_part("C5", "100nF", "C_0603", 9.40, ys, 180, c0603_pads("3V3", "GND_MCU"), "smd", sam, "CL10B104KB8NNNC", "C1591", c6)
+    add_part("C2", "10uF", "C_0603", 12.40, ys, 0, c0603_pads("3V3", "GND_MCU"), "smd", sam, "CL10A106KP8NNNC", "C19702", c6)
+    add_part("C3", "10uF", "C_0603", 18.30, ys, 0, c0603_pads("3V3", "GND_MCU"), "smd", sam, "CL10A106KP8NNNC", "C19702", c6)
+    add_part("C1", "10uF", "C_0603", 21.30, ys, 0, c0603_pads("GND_MCU", "VBUS"), "smd", sam, "CL10A106KP8NNNC", "C19702", c6)
+    # 100 nF from U3's VBUS pin to ground, as in ST's USBLC6-2 layout (datasheet figure 18): a
+    # positive hit on D+/D- leaves through U3's upper diodes into VBUS.
+    add_part("C7", "100nF", "C_0603", 14.20, 9.63, 0, c0603_pads("VBUS", "GND_MCU"), "smd", sam, "CL10B104KB8NNNC", "C1591", c6)
+    # Download-mode test pads on the back, beside the module's GPIO9 pin: bridge BOOT to GND
+    # while plugging in.
+    tp = (-1.0, -1.0, 1.0, 1.0)
+    add_part("TP1", "BOOT", "TestPoint_Pad_D1.5mm", 17.55, 15.50, 0, test_pad("GPIO9"), "board_only", "", "", "", tp)
+    add_part("TP2", "GND", "TestPoint_Pad_D1.5mm", 17.55, 18.00, 0, test_pad("GND_MCU"), "board_only", "", "", "", tp)
 
 
 def route():
@@ -526,6 +598,7 @@ def route():
     occupied = {}
     linked = {}
     npth = []
+    plated = []
 
     def to_i(v):
         return int(math.floor(v / RES + 0.5))
@@ -555,13 +628,15 @@ def route():
         if p.pin == "" and p.drill:
             npth.append((p.x, p.y, p.drill / 2.0))
             continue
+        if p.drill:
+            plated.append((p.x, p.y, p.drill / 2.0))
         lay = "*" if p.layer == "*" else p.layer
         strict = 1.0 if p.ref == "U1" and p.pin.isdigit() and int(p.pin) <= 48 else 0.0
         rect = ("pad", p.x - p.hw, p.y - p.hh, p.x + p.hw, p.y + p.hh, lay, p.net, strict)
         add_obs(rect, rect[1], rect[2], rect[3], rect[4])
 
     def forbidden(x, y, reach):
-        if x - reach < 0.45 or y - reach < 0.45:
+        if x - reach < BOARD_X0 + 0.45 or y - reach < 0.45:
             return True
         if x + reach > BOARD_W - 0.45 or y + reach > BOARD_H - 0.45:
             return True
@@ -569,20 +644,31 @@ def route():
         if x + reach > ax0 + 0.01 and x - reach < ax1 - 0.01 and y + reach > ay0 + 0.01 and y - reach < ay1 - 0.01:
             return True
         # The slot is an Edge.Cuts opening. KiCad wants 0.30 mm from the copper edge.
-        sx0, sy0, sx1, sy1 = SLOT
-        gap = 0.32
-        if x + reach > sx0 - gap and x - reach < sx1 + gap and y + reach > sy0 - gap and y - reach < sy1 + gap:
-            return True
+        if SLOT:
+            sx0, sy0, sx1, sy1 = SLOT
+            gap = 0.32
+            if x + reach > sx0 - gap and x - reach < sx1 + gap and y + reach > sy0 - gap and y - reach < sy1 + gap:
+                return True
         for hx, hy, hr in npth:
             if math.hypot(x - hx, y - hy) < hr + 0.32 + reach:
                 return True
         return False
 
     side_cache = {}
+    label_keepout = label_boxes()
+    # The receptacle's steel bottom plate lies on the board: no signal copper on the front and
+    # no signal via under it, where only solder mask would separate them from the shell.
+    j2s = next(q for q in PARTS if q.ref == "J2")
+    _sx = [rot_xy(lx, ly, j2s.rot) for lx in (-4.47, 4.47) for ly in (USB_FRONT_Y, USB_FRONT_Y - USB_SHELL_LEN)]
+    J2_SHELL = (j2s.x + min(a for a, _ in _sx), j2s.y + min(b for _, b in _sx),
+                j2s.x + max(a for a, _ in _sx), j2s.y + max(b for _, b in _sx))
 
     def blocked(x, y, layer_name, half, net, clr, is_via):
         reach = VIA_R if is_via else half
         if forbidden(x, y, reach):
+            return True
+        # No via under a silkscreen label: the hole would break the letters.
+        if is_via and any(_point_rect(x, y, *b) < VIA_R for b in label_keepout):
             return True
         # Isolation barrier: every track and via stays ISO_HALF clear of the barrier line,
         # on its own ground's side, on both layers.
@@ -592,6 +678,15 @@ def route():
             ok = side_cache[key] = domain_ok(x, y, reach, key[3])
         if not ok:
             return True
+        if (layer_name == "F" or is_via) and net != "GND_MCU":
+            sx0, sy0, sx1, sy1 = J2_SHELL
+            if x + reach > sx0 and x - reach < sx1 and y + reach > sy0 and y - reach < sy1:
+                return True
+        # Via holes keep 0.30 mm to plated pad holes, own net included (KiCad wants 0.25).
+        if is_via:
+            for hx, hy, hr in plated:
+                if math.hypot(x - hx, y - hy) < 0.15 + hr + 0.30:
+                    return True
         # No front-layer signal copper under U1's exposed ground pad (with 1 mm margin): a
         # track there would sit under the module's own GND pad. Short stubs between the pad
         # ring and that area, vias and the back layer are fine.
@@ -736,185 +831,159 @@ def route():
         return best, bx, by
 
     # --- Hand-drawn copper ---------------------------------------------------------------
-    # J2 shell lugs. The lower front/rear pair is joined on the front and tied to the nearest
-    # GND pad, the upper rear lug too, so no lug depends on a thermal spoke squeezing past the
-    # NPTH pegs. The D+/D- stubs to U3 pass between the upper lugs, so the upper front lug is
-    # tied to the R7/R10 ground via instead.
+    # J2 shell lugs: front and rear lug of each side joined on the back, each rear lug tied on
+    # the front to the ground pad beside it.
     j2 = next(q for q in PARTS if q.ref == "J2")
     lugs = pads_of("J2", "SH")
-    top = sorted((q for q in lugs if q.y < j2.y), key=lambda q: q.x)
-    bot = sorted((q for q in lugs if q.y > j2.y), key=lambda q: q.x)
-    a1, a12 = at("J2", "A1"), at("J2", "A12")
-    add_poly("GND_MCU", "F", [(top[1].x, top[1].y), (a1[0], top[1].y), a1], 0.25)
-    add_poly("GND_MCU", "F", [(bot[0].x, bot[0].y), (a12[0], bot[0].y), a12], 0.25)
-    rg = (0.85, at("R10", "1")[1] + 1.0)
-    add_poly("GND_MCU", "F", [at("R7", "1"), at("R10", "1"), rg, (top[0].x - 0.65, top[0].y)], 0.30)
-    add_via("GND_MCU", *rg)
+    left = sorted((q for q in lugs if q.x < j2.x), key=lambda q: q.y)
+    right = sorted((q for q in lugs if q.x > j2.x), key=lambda q: q.y)
+    for front, rear in (left, right):
+        add_poly("GND_MCU", "B", [(front.x, front.y), (rear.x, rear.y)], 0.30)
+    gl, gr = at("J2", "A12"), at("J2", "A1")
+    ytie = j2.y + 3.80
+    add_poly("GND_MCU", "F", [(left[1].x, ytie), (gl[0], ytie)], 0.30)
+    add_poly("GND_MCU", "F", [(right[1].x, ytie), (gr[0], ytie)], 0.30)
     for p in list(lugs) + [q for pin in ("A1", "A12", "B1", "B12") for q in pads_of("J2", pin)]:
         seed_pad(p)
 
-    # USB pair, front only. DP joins A6/B6 in a loop just left of the pad row (under the body),
-    # DM joins B7/A7 just right of it. The pair then runs under the optocoupler bodies on the
-    # MCU side of the slot, drops between OK2 and OK3, and turns along the gap above the
-    # module's top pin row into pins 17 (DM) and 18 (DP).
-    tw = 0.20
-    a6, b6, b7, a7 = at("J2", "A6"), at("J2", "B6"), at("J2", "B7"), at("J2", "A7")
-    xl = a6[0] - 0.725 - 0.32
-    dm_y, dp_y = b7[1], a6[1]                 # 8.00 and 8.50: runs under the opto bodies
-    dp_x, dm_x = 20.75, 21.45                 # drops between OK2 pin 4 and OK3 pin 3
-    dp_h, dm_h = 14.20, 14.70                 # runs above the module's top row
-    p17, p18 = at("U1", "17"), at("U1", "18")
-    add_poly("USB_DP", "F", [a6, (xl, a6[1]), (xl, b6[1]), b6], tw)
-    add_poly("USB_DP", "F", [b6, (9.10, b6[1]), (9.10, dp_y), (dp_x, dp_y), (dp_x, dp_h),
-                             (p18[0], dp_h), p18], tw)
-    add_poly("USB_DM", "F", [a7, (8.55, a7[1]), (8.55, b7[1]), b7], tw)
-    add_poly("USB_DM", "F", [(8.55, dm_y), (dm_x, dm_y), (dm_x, dm_h), (p17[0], dm_h), p17], tw)
-    for p in pads_of("J2", "A6") + pads_of("J2", "B6") + pads_of("J2", "A7") + pads_of("J2", "B7"):
-        seed_pad(p)
-    seed_pad(pads_of("U1", "17")[0])
-    seed_pad(pads_of("U1", "18")[0])
-
-    # USB ESD array U3 above J2. D- and D+ reach it as stubs from the left side of the J2 pad
-    # row, under the receptacle body and between the upper shell lugs: D- from B7 up into
-    # pin 3 (I/O2), D+ from the A6/B6 loop round to pin 1 (I/O1), which a bridge under the
-    # package joins to pin 6. Ground leaves pin 2 down the gap between the pad rows to a via
-    # and the rear shell lug, 2.7 mm in all. VBUS (pin 5) comes up the gap right of the pad
-    # row from the J2 VBUS pad.
-    u3 = next(q for q in PARTS if q.ref == "U3")
-    u1p, u2p, u3p, u5p, u6p = (at("U3", n) for n in ("1", "2", "3", "5", "6"))
-    add_poly("USB_DP", "F", [u1p, u6p], tw)
-    gv = (u3.x, u3p[1] + 0.88)
-    add_poly("GND_MCU", "F", [u2p, (u3.x, u2p[1]), gv, (u3.x, top[1].y - top[1].hh + 0.05)], 0.30)
-    add_via("GND_MCU", *gv)
-    add_poly("VBUS", "F", [u5p, (8.50, u5p[1]), (8.50, at("J2", "A4")[1])], tw)
-    xd, xp = 5.00, 4.25                       # stub columns under the J2 body
-    add_poly("USB_DM", "F", [b7, (xd, b7[1]), (xd, u3p[1])], tw)
-    ym = (a6[1] + b6[1]) / 2.0
-    add_poly("USB_DP", "F", [(xl, ym), (xp, ym), (xp, u1p[1]), u1p], tw)
-    for n in ("1", "2", "3", "5", "6"):
-        seed_pad(pads_of("U3", n)[0])
-
-    # CC lines: CC1 leaves A5 to the left and drops to the back above the D- stub, CC2 leaves
-    # B5 to the left below the D+ loop. Both cross under the body on the back and come up
-    # through a via beside their pull-down.
-    a5, b5 = at("J2", "A5"), at("J2", "B5")
-    r7c, r10c = at("R7", "2"), at("R10", "2")
-    cc1v, r7v = (5.85, a5[1] - 0.55), (3.45, r7c[1] + 0.51)   # r7v low: U3's pin-1 dot goes above it
-    add_poly("CC1", "F", [a5, (6.25, a5[1]), cc1v], tw)
-    add_poly("CC1", "B", [cc1v, (4.75, cc1v[1]), (4.75, r7v[1]), r7v], tw)
-    add_poly("CC1", "F", [r7v, r7c], tw)
-    cc2v, r10v = (5.85, b5[1]), (r10c[0], r10c[1] + 0.95)
-    add_poly("CC2", "F", [b5, cc2v], tw)
-    add_poly("CC2", "B", [cc2v, (3.80, cc2v[1]), (3.80, r10v[1]), r10v], tw)
-    add_poly("CC2", "F", [r10v, r10c], tw)
-    for v in (cc1v, r7v):
-        add_via("CC1", *v)
-    for v in (cc2v, r10v):
-        add_via("CC2", *v)
-    for ref, pin in (("J2", "A5"), ("J2", "B5"), ("R7", "2"), ("R10", "2")):
-        seed_pad(pads_of(ref, pin)[0])
-
-    # VBUS, 0.5 mm: both J2 VBUS pads to vias, joined on the back, one back run under the
-    # optocouplers and down the right side, then the front spine of the regulator column.
+    # VBUS, 0.5 mm. Both J2 VBUS pads drop to vias just below the pad row; a back trunk joins
+    # them (dipping under the CC1 via), runs right above the USB lines to the barrier side and
+    # down to two vias level with C4; a front spine there feeds C4, U2's EN and VIN and C1 at
+    # the bottom. U3's VBUS pin reaches the right-hand via through C7's pad.
     pw = 0.50
-    vx = 9.00
-    vb_t, vb_b = at("J2", "A4"), at("J2", "A9")
-    add_poly("VBUS", "F", [vb_t, (vx, vb_t[1])], pw)
-    add_poly("VBUS", "F", [vb_b, (vx, vb_b[1])], pw)
-    add_via("VBUS", vx, vb_t[1])
-    add_via("VBUS", vx, vb_b[1])
-    add_poly("VBUS", "B", [(vx, vb_t[1]), (vx, vb_b[1])], pw)
-    sx = 29.45
-    add_poly("VBUS", "B", [(vx, 7.80), (23.90, 7.80), (23.90, 10.70), (sx, 10.70), (sx, 16.30)], pw)
-    add_via("VBUS", sx, 16.30)
-    c4v, c1v = at("C4", "1"), at("C1", "1")
-    u_vin, u_en = at("U2", "1"), at("U2", "3")
-    add_poly("VBUS", "F", [(sx, 16.30), (sx, u_vin[1]), u_vin], pw)
-    add_poly("VBUS", "F", [c4v, (sx, c4v[1])], pw)
-    add_poly("VBUS", "F", [c1v, (sx, c1v[1])], pw)
-    add_poly("VBUS", "F", [u_en, (sx, u_en[1])], 0.30)
-    for ref, pin in (("J2", "A4"), ("J2", "B9"), ("J2", "A9"), ("J2", "B4"), ("C4", "1"),
-                     ("C1", "1"), ("U2", "1"), ("U2", "3")):
-        for p in pads_of(ref, pin):
-            seed_pad(p)
+    vl, vr = at("J2", "A9"), at("J2", "A4")
+    yv = 8.25
+    vbl, vbr = (vl[0], yv), (vr[0], 8.40)
+    add_poly("VBUS", "F", [vl, vbl], pw)
+    add_poly("VBUS", "F", [vr, vbr], 0.40)
+    vin, ven, c4v, c1v = at("U2", "1"), at("U2", "3"), at("C4", "2"), at("C1", "2")
+    sx, sy = 22.30, round(c4v[1] - 0.90, 3)
+    xd, yd = 11.40, 8.90
+    add_poly("VBUS", "B", [vbl, (xd, yv), (xd, yd), (vbr[0], yd), vbr], pw)
+    add_poly("VBUS", "B", [vbr, (vbr[0], yv), (sx, yv), (sx, sy)], pw)
+    sy2 = round(sy - 0.75, 3)
+    add_poly("VBUS", "F", [(sx, sy2), (sx, c1v[1]), c1v], pw)
+    add_poly("VBUS", "F", [(sx, vin[1]), vin], pw)
+    add_poly("VBUS", "F", [(sx, ven[1]), ven], 0.40)
+    add_poly("VBUS", "F", [(sx, c4v[1]), c4v], 0.40)
+    for v in (vbl, vbr, (sx, sy), (sx, sy2)):
+        add_via("VBUS", *v)
+    for ref, pin in (("J2", "A4"), ("J2", "B9"), ("J2", "A9"), ("J2", "B4"),
+                     ("C1", "2"), ("C4", "2"), ("U2", "1"), ("U2", "3")):
+        for q in pads_of(ref, pin):
+            seed_pad(q)
 
-    # 3V3 trunk, 0.5 mm: regulator output -> its 10 uF (C3); up and over C5 to the 100 nF
-    # (C5) and 10 uF (C2) that sit at module pin 3, then 0.4 mm into the pin.
-    vout = at("U2", "5")
-    c3p, c5p, c2p, p3 = at("C3", "1"), at("C5", "1"), at("C2", "1"), at("U1", "3")
-    add_poly("3V3", "F", [vout, (c3p[0], vout[1]), c3p], pw)
-    add_poly("3V3", "F", [(25.60, vout[1]), (25.60, 21.50), (c5p[0], 21.50), c5p, c2p], pw)
-    add_poly("3V3", "F", [c5p, p3], 0.40)
-    # Pull-up feed for the row above the module (R12, R4): joined on the front, one via
-    # between them, a back run under the module's edge and a via beside the trunk.
-    r12v, r4v = at("R12", "2"), at("R4", "2")
-    add_poly("3V3", "F", [r12v, r4v], 0.30)
-    add_via("3V3", 16.20, r12v[1])
-    add_poly("3V3", "B", [(16.20, r12v[1]), (16.20, 16.30), (24.40, 16.30), (24.40, 20.40)], 0.30)
-    add_via("3V3", 24.40, 20.40)
-    add_poly("3V3", "F", [(24.40, 20.40), (24.40, 21.50)], 0.30)
-    # R9 and R5 (pull-ups under OK3) share one link down to R8's 3V3 pad, which drops to the
-    # trunk under C6's body, between its pads.
-    r9v, r5v, r8v = at("R9", "1"), at("R5", "1"), at("R8", "2")
-    add_poly("3V3", "F", [r9v, r5v, (r5v[0], r8v[1])], 0.25)
-    add_poly("3V3", "F", [r8v, (r8v[0], 17.70), (23.35, 17.70), (23.35, 21.50)], 0.25)
-    for ref, pin in (("U2", "5"), ("C3", "1"), ("C5", "1"), ("C2", "1"), ("U1", "3"),
-                     ("R12", "2"), ("R4", "2"), ("R9", "1"), ("R5", "1"), ("R8", "2")):
+    # 3V3 trunk, 0.45 mm: VOUT down into the strip below the module and left between the
+    # module's bottom pins and the capacitor row to pin 3, with stubs into the 3V3 pads of C3,
+    # C2 and C5 (C5 right under pin 3).
+    vout, p3 = at("U2", "5"), at("U1", "3")
+    yt3 = 25.625
+    add_poly("3V3", "F", [vout, (vout[0], yt3), (p3[0], yt3)], 0.45)
+    add_poly("3V3", "F", [(p3[0], yt3), p3], 0.40)
+    for ref in ("C3", "C2", "C5"):
+        c = at(ref, "1")
+        add_poly("3V3", "F", [(c[0], yt3), c], 0.40)
+    for ref, pin in (("U2", "5"), ("U1", "3"), ("C2", "1"), ("C5", "1"), ("C3", "1")):
         seed_pad(pads_of(ref, pin)[0])
 
-    # EN: module pin 8 -> 1 uF (C6) -> 10 k pull-up (R8), all within 2 mm of the pin. The
-    # search adds the reset button.
-    p8, c6e, r8e = at("U1", "8"), at("C6", "1"), at("R8", "1")
-    add_poly("EN", "F", [p8, c6e, (c6e[0], r8e[1]), r8e], 0.25)
-    for ref, pin in (("U1", "8"), ("C6", "1"), ("R8", "1")):
+    # USB pair through the ESD array. D+ joins B6/A6 in a loop right in front of the pad row,
+    # under the receptacle's plastic rear part (its steel bottom plate ends just in front of
+    # the loop; at 0.5 mm pitch the two links must cross, and vias do not fit between the
+    # pads), D- joins A7/B7 in a loop just below it. U3 sits right under the loops:
+    # D+ drops from B6 into U3 pin 1 (I/O1) and leaves it into the channel between U3's pad
+    # columns; D- drops from its loop into the same channel and taps pin 4 (I/O2). So an ESD
+    # hit on the receptacle meets U3 first. Below U3 both lines go to the back, run down under
+    # the module and come up again inside its pad ring, next to pins 18 and 17. The right side
+    # of the module stays free on the back for the GPIO lines.
+    tw = 0.20
+    a6, b6, a7, b7 = at("J2", "A6"), at("J2", "B6"), at("J2", "A7"), at("J2", "B7")
+    p17, p18 = at("U1", "17"), at("U1", "18")
+    u1p, u2p, u4p, u5p = (at("U3", n) for n in ("1", "2", "4", "5"))
+    u3 = next(q for q in PARTS if q.ref == "U3")
+    yt = round(a6[1] - USB_PAD_LEN / 2 - CLEARANCE - tw / 2 - 0.005, 3)
+    yl = a7[1] + USB_PAD_LEN / 2 + CLEARANCE + tw / 2
+    xdp, xdm = u3.x - 0.20, u3.x + 0.20
+    dp1, dm1 = (round(xdp - 0.25, 3), 10.95), (round(xdm + 0.40, 3), 11.40)
+    yb_dp, xb_dp, xb_dm = 10.70, 13.25, 12.60
+    dp2 = (15.00, round(p18[1] - 0.35, 3))
+    dm2 = (15.00, round(p17[1] + 0.35, 3))
+    add_poly("USB_DP", "F", [b6, (b6[0], yt), (a6[0], yt), a6], tw)
+    add_poly("USB_DM", "F", [a7, (a7[0], yl), (b7[0], yl), b7], tw)
+    add_poly("USB_DP", "F", [b6, (b6[0], u1p[1]), (xdp, u1p[1]), (xdp, dp1[1] - 0.35), dp1], tw)
+    add_poly("USB_DM", "F", [(xdm, yl), (xdm, dm1[1] - 0.40), dm1], tw)
+    add_poly("USB_DM", "F", [(xdm, u4p[1]), u4p], tw)
+    add_poly("USB_DP", "B", [dp1, (dp1[0], yb_dp), (xb_dp, yb_dp), (xb_dp, dp2[1]), dp2], tw)
+    add_poly("USB_DM", "B", [dm1, (xb_dm, dm1[1]), (xb_dm, dm2[1]), dm2], tw)
+    add_poly("USB_DP", "F", [dp2, (15.30, p18[1]), p18], tw)
+    add_poly("USB_DM", "F", [dm2, (15.30, p17[1]), p17], tw)
+    for v, net in ((dp1, "USB_DP"), (dm1, "USB_DM"), (dp2, "USB_DP"), (dm2, "USB_DM")):
+        add_via(net, *v)
+    # U3 ground: out of pin 2 to a via below-left of the package, clear of R10. VBUS: out of
+    # pin 5 straight to C7 (0.3 mm beside U3's pins, then 0.4 mm), with a tie up to the
+    # right-hand VBUS via on the way.
+    gv = (round(u3.x - 1.50, 3), 10.95)
+    add_poly("GND_MCU", "F", [u2p, (gv[0], u2p[1]), gv], 0.25)
+    add_via("GND_MCU", *gv)
+    c7v = at("C7", "1")
+    xw = u5p[0] + 0.475
+    add_poly("VBUS", "F", [u5p, (xw, u5p[1])], 0.30)
+    add_poly("VBUS", "F", [(xw, u5p[1]), c7v], 0.40)
+    add_poly("VBUS", "F", [(vbr[0], u5p[1]), vbr], 0.40)
+    # CC1 stays out from under the shell: down out of A5 into the pocket between the D- loop,
+    # the VBUS pad and U3, through a via to the back, right between the rear shell lug and the
+    # VBUS trunk, up beside the lugs and over to a via above R7 (GPIO19 passes below R7's
+    # CC1 pad on the front).
+    a5, r7c = at("J2", "A5"), at("R7", "2")
+    cv1, cv2 = (round(a5[0] + 0.35, 3), 7.98), (r7c[0], round(r7c[1] - 1.075, 3))
+    xc = 15.95
+    add_poly("CC1", "F", [a5, (a5[0], 7.75), cv1], tw)
+    add_poly("CC1", "B", [cv1, (round(cv1[0] + 0.28, 3), 7.70), (xc, 7.70), (xc, cv2[1]), cv2], tw)
+    add_poly("CC1", "F", [cv2, r7c], tw)
+    for v in (cv1, cv2):
+        add_via("CC1", *v)
+    for ref, pin in (("J2", "A5"), ("R7", "2")):
         seed_pad(pads_of(ref, pin)[0])
+    # The GPIO lines out of pins 24 and 25 box in the module's corner ground pad 51: a via
+    # straight above it, between the two back USB lines' ends. C5's ground pad sits below the
+    # end of the 3V3 trunk: a via left of it, tied up to the module's ground pin 2.
+    q51 = at("U1", "51")
+    v51 = (q51[0], 12.05)
+    add_poly("GND_MCU", "F", [q51, v51], 0.30)
+    add_via("GND_MCU", *v51)
+    c5g, p2 = at("C5", "2"), at("U1", "2")
+    v5 = (round(c5g[0] - 1.0, 3), c5g[1])
+    add_poly("GND_MCU", "F", [c5g, v5], 0.30)
+    add_poly("GND_MCU", "F", [p2, (p2[0], 25.95), v5], 0.25)
+    add_via("GND_MCU", *v5)
+    for ref, pin in (("U1", "51"), ("U1", "2"), ("C5", "2")):
+        seed_pad(pads_of(ref, pin)[0])
+    # C7's ground: a via just below its pad.
+    c7g = at("C7", "2")
+    c7gv = (c7g[0], round(c7g[1] + 1.12, 3))
+    add_poly("GND_MCU", "F", [c7g, c7gv], 0.40)
+    add_via("GND_MCU", *c7gv)
+    for ref, pin in (("J2", "A6"), ("J2", "B6"), ("J2", "A7"), ("J2", "B7"), ("U1", "17"), ("U1", "18"),
+                     ("U3", "1"), ("U3", "2"), ("U3", "4"), ("U3", "5"), ("C7", "1"), ("C7", "2")):
+        for q in pads_of(ref, pin):
+            seed_pad(q)
 
-    # Regulator ground: stub under the body to a via between the two pin rows.
-    ug = at("U2", "2")
-    add_poly("GND_MCU", "F", [ug, (27.15, ug[1])], 0.30)
-    add_via("GND_MCU", 27.15, ug[1])
-    seed_pad(pads_of("U2", "2")[0])
-    # Ground ties placed before the search, so it routes around them. The MCU-side ground pin
-    # of each optocoupler sits inside the USB pair's loop on the front and between the long
-    # signal runs on the back, so neither pour reaches it reliably: each gets a via under the
-    # body, a back rail joins them, and a via at the rail's left end drops to a front track
-    # into J2's lower GND pad.
-    rail_y, rail_x0, rail_vy = 8.60, 9.80, 9.75
-    for ref, pin in (("OK1", "2"), ("OK2", "3"), ("OK3", "3")):
-        gp = pads_of(ref, pin)[0]
-        vy = gp.y - gp.hh - 0.60
-        add_poly("GND_MCU", "F", [(gp.x, gp.y), (gp.x, vy)], 0.30)
-        add_via("GND_MCU", gp.x, vy)
-        add_poly("GND_MCU", "B", [(gp.x, vy), (gp.x, rail_y)], 0.30)
-        seed_pad(gp)
-    add_poly("GND_MCU", "B", [(rail_x0, rail_y), (at("OK3", "3")[0], rail_y)], 0.30)
-    add_poly("GND_MCU", "B", [(rail_x0, rail_y), (rail_x0, rail_vy)], 0.30)
-    add_via("GND_MCU", rail_x0, rail_vy)
-    add_poly("GND_MCU", "F", [(rail_x0, rail_vy), (rail_x0, 12.00), (a12[0], 12.00), a12], 0.30)
-    # The C6/C4/C1 ground pads share a front pocket that only this via joins to the back pour.
-    add_via("GND_MCU", 25.20, 17.90)
-    # Module corner ground pad 51 sits where GPIO9, GPIO18 and GPIO19 leave the module; give it
-    # its own via before they are routed.
-    p51 = at("U1", "51")
-    add_poly("GND_MCU", "F", [p51, (8.00, 15.70)], 0.30)
-    add_via("GND_MCU", 8.00, 15.70)
-    seed_pad(pads_of("U1", "51")[0])
-
-    # Local links that must not be left to the search order: each resistor in the row
-    # straight up to its optocoupler pin, and GPIO8 from module pin 22 to its pull-up.
-    for net, (ra, pa), (rb, pb), lx in (
-        ("LED_DOOR", ("R1", "1"), ("OK1", "1"), 11.30),
-        ("GPIO18", ("R4", "1"), ("OK2", "4"), 19.51),
-        ("GPIO20", ("R5", "2"), ("OK3", "4"), 24.90),
-    ):
-        a, b = pads_of(ra, pa)[0], pads_of(rb, pb)[0]
-        add_poly(net, "F", [(lx, a.y), (lx, b.y)], tw)
-        seed_pad(a)
-        seed_pad(b)
-    p22, r12g = at("U1", "22"), at("R12", "1")
-    add_poly("GPIO8", "F", [p22, (p22[0], 14.50), (r12g[0], 14.50), r12g], tw)
-    seed_pad(pads_of("U1", "22")[0])
-    seed_pad(pads_of("R12", "1")[0])
+    # GPIO lines out of the module's top-right corner, drawn before the search so that they fan
+    # out without crossing: GPIO19 (pin 25) up beside the receptacle and between R7's pads to
+    # R6 (R1 joins it there), GPIO18 (pin 24) up beside it to R4, GPIO20 (pin 26) under both on
+    # the back to R5. OK2 and OK3 join R4 and R5 in the search.
+    p24, p25, p26 = at("U1", "24"), at("U1", "25"), at("U1", "26")
+    r6g, r4g, r5g = at("R6", "2"), at("R4", "1"), at("R5", "1")
+    x19, y19, x18 = 15.95, 11.40, 16.60
+    add_poly("GPIO19", "F", [p25, (p25[0], y19), (x19, y19), (x19, r6g[1] - 0.325), (r6g[0], r6g[1] - 0.325)], 0.20)
+    add_poly("GPIO18", "F", [p24, (x18, p24[1]), (x18, r4g[1]), r4g], 0.20)
+    g20a, g20b = (p26[0], 12.05), (17.30, 12.75)
+    add_poly("GPIO20", "F", [p26, g20a], 0.20)
+    add_poly("GPIO20", "B", [g20a, (g20a[0], g20b[1]), g20b], 0.20)
+    add_poly("GPIO20", "F", [g20b, (r5g[0], g20b[1]), r5g], 0.20)
+    add_via("GPIO20", *g20a)
+    add_via("GPIO20", *g20b)
+    for ref, pin in (("U1", "24"), ("U1", "25"), ("U1", "26"), ("R6", "2"), ("R4", "1"), ("R5", "1")):
+        seed_pad(pads_of(ref, pin)[0])
 
     def search(p, width, clr, margin):
         half = width / 2.0
@@ -1077,55 +1146,6 @@ def route():
         out.append(pts[-1])
         return _compress(out)
 
-    # USB, VBUS and the 3V3/EN trunks are already drawn; the search adds the rest. Signals
-    # try 0.20 mm first, the 3V3 and EN branches (pull-ups, button) 0.25 mm.
-    order = (
-        ("GPIO8", 0.20), ("GPIO9", 0.20), ("GPIO18", 0.20), ("GPIO20", 0.20), ("GPIO19", 0.20),
-        ("LED_DOOR", 0.20), ("CC1", 0.20), ("CC2", 0.20), ("3V3", 0.25), ("EN", 0.25),
-        ("LED_CHIME", 0.20), ("LED_FLOOR", 0.20),
-        ("DOOR", 0.25), ("CHIME", 0.25), ("FLOOR", 0.25), ("GND_BUS", 0.25),
-    )
-    failed = []
-    for net, width in order:
-        pads = [p for p in PADS if p.net == net and p.pin != ""]
-        # Start from the pad nearest the others and add the rest nearest first, so short local
-        # links (a pull-up beside its optocoupler pin) exist before the long run to the module.
-        if len(pads) > 2:
-            hub = min(pads, key=lambda p: sum(math.hypot(p.x - q.x, p.y - q.y) for q in pads))
-            pads.sort(key=lambda p: math.hypot(p.x - hub.x, p.y - hub.y))
-        loose = []
-        seeded = False
-        for p in pads:
-            ix, iy = to_i(p.x), to_i(p.y)
-            hit = any((ix, iy, layer_i) in occupied.get(net, ()) for layer_i in layers_of(p))
-            if hit:
-                seeded = True
-            else:
-                loose.append(p)
-        if not seeded and loose:
-            seed_pad(loose.pop(0))
-        elif not seeded and pads:
-            seed_pad(pads[0])
-        for p in loose:
-            ix, iy = to_i(p.x), to_i(p.y)
-            if any((ix, iy, layer_i) in occupied.get(net, ()) for layer_i in layers_of(p)):
-                continue
-            t1 = _time.perf_counter()
-            ok = False
-            for margin in (16.0, None):
-                if search(p, width, 0.24, margin):
-                    ok = True
-                    break
-            if not ok and width > 0.15:
-                ok = search(p, 0.15, 0.20, None)
-            elif not ok:
-                ok = search(p, width, 0.20, None)
-            print(f"{net} {p.ref}.{p.pin} {'ok' if ok else 'FAIL'} { _time.perf_counter() - t1:.1f}s", flush=True)
-            if ok:
-                seed_pad(p)
-            else:
-                failed.append(f"{net} {p.ref}.{p.pin}")
-
     def try_gnd_via(net, x, y):
         if forbidden(x, y, VIA_R):
             return False
@@ -1163,42 +1183,96 @@ def route():
                 return True
         return False
 
-    # Ground vias beside each ground pad (in the pad only when nothing fits beside it), then
-    # stitching vias across both pours.
-    for ref in ("C1", "C2", "C3", "C4", "C5", "C6", "R6", "SW1", "SW2"):
-        hit = pads_of(ref, net="GND_MCU")
-        if not hit:
-            continue
-        p = min(hit, key=lambda q: q.x * q.x + q.y * q.y)
-        if not try_gnd_via_beside("GND_MCU", p):
-            try_gnd_via("GND_MCU", p.x, p.y)
-    for ref, pin in (("OK1", "2"), ("OK2", "3"), ("OK3", "3")):
+    # Ground vias beside each ground pad (in the pad only when nothing fits beside it), placed
+    # before the signal search so the signals route around them. Stitching vias across both
+    # pours on a 2.4 mm grid follow after the search.
+    for ref in ("C1", "C2", "C3", "C4", "C5", "C6", "R6", "R7", "R10", "U2"):
+        for p in pads_of(ref, net="GND_MCU"):
+            if not try_gnd_via_beside("GND_MCU", p):
+                try_gnd_via("GND_MCU", p.x, p.y)
+    for ref, pin in (("OK1", "2"), ("OK2", "3"), ("OK3", "3"), ("U1", "14"), ("U1", "11"), ("U1", "1")):
         p = pads_of(ref, pin)[0]
         if not try_gnd_via_beside("GND_MCU", p):
             try_gnd_via("GND_MCU", p.x, p.y)
-    try_gnd_via_beside("GND_MCU", pads_of("U1", "14")[0])
-    mcu_poly = None
-    bus_poly = None
+    for ref, pin in (("OK1", "3"), ("OK2", "2"), ("OK3", "2")):
+        p = pads_of(ref, pin)[0]
+        if not try_gnd_via_beside("GND_BUS", p):
+            try_gnd_via("GND_BUS", p.x, p.y)
+    # Espressif's module placement guide asks for ground copper and dense ground vias on the
+    # base board near the antenna: a row under the module every 1.6 mm, between its ground pad
+    # and the pin row at the antenna end.
+    u1 = next(q for q in PARTS if q.ref == "U1")
+    for lx in (-4.8, -3.2, -1.6, 0.0, 1.6, 3.2, 4.8):
+        dx, dy = rot_xy(lx, -0.9, u1.rot)
+        try_gnd_via("GND_MCU", round(u1.x + dx, 2), round(u1.y + dy, 2))
+    # The search adds everything else: signals at 0.20 mm, the 3V3 branches to the pull-ups at
+    # 0.30 mm, the bus lines at 0.30 mm. Supply trunks are drawn above.
+    order = (
+        ("VBUS", (0.50, 0.40, 0.30)),
+        ("GPIO8", (0.20, 0.15)), ("GPIO9", (0.20, 0.15)),
+        ("GPIO18", (0.20, 0.15)), ("GPIO20", (0.20, 0.15)), ("GPIO19", (0.20, 0.15)),
+        ("LED_DOOR", (0.20, 0.15)),
+        ("CC1", (0.20, 0.15)), ("CC2", (0.20, 0.15)), ("EN", (0.25, 0.20)),
+        ("3V3", (0.30, 0.25, 0.20)),
+        ("LED_CHIME", (0.25, 0.20)), ("LED_FLOOR", (0.25, 0.20)),
+        ("DOOR", (0.30, 0.25)), ("CHIME", (0.30, 0.25)), ("FLOOR", (0.30, 0.25)), ("GND_BUS", (0.30, 0.25)),
+    )
+    failed = []
+    for net, widths in order:
+        pads = [p for p in PADS if p.net == net and p.pin != ""]
+        # Start from the pad nearest the others and add the rest nearest first, so short local
+        # links exist before the long runs.
+        if len(pads) > 2:
+            hub = min(pads, key=lambda p: sum(math.hypot(p.x - q.x, p.y - q.y) for q in pads))
+            pads.sort(key=lambda p: math.hypot(p.x - hub.x, p.y - hub.y))
+        loose = []
+        seeded = False
+        for p in pads:
+            ix, iy = to_i(p.x), to_i(p.y)
+            if any((ix, iy, layer_i) in occupied.get(net, ()) for layer_i in layers_of(p)):
+                seeded = True
+            else:
+                loose.append(p)
+        if not seeded and loose:
+            seed_pad(loose.pop(0))
+        for p in loose:
+            ix, iy = to_i(p.x), to_i(p.y)
+            if any((ix, iy, layer_i) in occupied.get(net, ()) for layer_i in layers_of(p)):
+                continue
+            t1 = _time.perf_counter()
+            ok = False
+            for width in widths:
+                for margin in (16.0, None):
+                    if search(p, width, 0.24 if width >= 0.2 else 0.20, margin):
+                        ok = True
+                        break
+                if ok:
+                    break
+            if not ok:
+                ok = search(p, widths[-1], 0.20, None)
+            print(f"{net} {p.ref}.{p.pin} {'ok' if ok else 'FAIL'} {_time.perf_counter() - t1:.1f}s", flush=True)
+            if ok:
+                seed_pad(p)
+            else:
+                failed.append(f"{net} {p.ref}.{p.pin}")
+
+    labels = label_boxes()
     for name, layer, poly in zones():
-        if layer == "F.Cu" and name == "GND_MCU":
-            mcu_poly = poly
-        if layer == "F.Cu" and name == "GND_BUS":
-            bus_poly = poly
-    for x, y in (
-        (1.0, 8.55), (1.0, 25.4), (8.0, 25.5), (11.0, 18.0), (18.6, 18.0),
-        (11.0, 22.4), (18.6, 22.4), (14.8, 24.0), (14.8, 17.0), (11.5, 9.7), (16.5, 9.7),
-        (22.0, 9.7), (29.5, 11.0), (29.5, 25.4), (21.9, 25.5), (25.2, 25.5), (5.0, 19.67),
-        (8.3, 6.6), (8.3, 10.4), (1.0, 12.4),
-    ):
-        if mcu_poly and _inside(x, y, mcu_poly):
-            try_gnd_via("GND_MCU", x, y)
-    # Bus side: the top strip, the gaps left of the terminal pins and the column below them.
-    # The gaps right of the pins hold the wire-direction arrows on the silkscreen.
-    for x, y in ((16.0, 3.2), (24.0, 3.2), (32.4, 3.2), (32.1, 13.9), (32.1, 17.7), (32.1, 21.5),
-                 (32.2, 25.0), (32.3, 27.0), (34.6, 26.8), (35.6, 25.0), (35.6, 23.43),
-                 (35.6, 19.62), (35.6, 15.81), (35.5, 28.4)):
-        if bus_poly and _inside(x, y, bus_poly):
-            try_gnd_via("GND_BUS", x, y)
+        if layer != "F.Cu":
+            continue
+        xs = [q[0] for q in poly]
+        ys = [q[1] for q in poly]
+        y = min(ys) + 0.9
+        while y < max(ys) - 0.5:
+            x = min(xs) + 0.9
+            while x < max(xs) - 0.5:
+                under_label = any(
+                    _point_rect(x, y, bx0, by0, bx1, by1) < VIA_R for bx0, by0, bx1, by1 in labels
+                )
+                if _inside(x, y, poly) and not under_label:
+                    try_gnd_via(name, round(x, 2), round(y, 2))
+                x += 2.4
+            y += 2.4
     # Drop signal spurs. A via with copper on only one layer, and the track
     # that ran out to it, are removed. Ground vias stay: the pour joins them.
     def _on_copper(x, y, net, layer, skip):
@@ -1330,20 +1404,12 @@ def _compress(pts):
 
 def zones():
     # Both pour outlines sit ISO_HALF from the barrier line, so every point of one ground pour
-    # is at least 2 * ISO_HALF from the other, slot or no slot. GND_MCU stops at the antenna
-    # keepout (y = ANT[1]) across its whole width. Bus is the strip above the slot and the
-    # whole column beside and under the terminal, so J1 pin 4 never hangs on one track.
+    # is at least 2 * ISO_HALF from the other. GND_MCU fills the board left of the barrier,
+    # the bus pour the column right of it.
     h = ISO_HALF
-    (bx0, _), (_, by1), (bx2, _), (_, by3), (bx4, _), (_, by5), (bx6, _), _ = BARRIER
-    mcu = [
-        (0.50, 0.50), (bx0 - h, 0.50), (bx0 - h, by1 + h), (bx2 - h, by1 + h),
-        (bx2 - h, by3 + h), (bx4 - h, by3 + h), (bx4 - h, by5 + h), (bx6 - h, by5 + h),
-        (bx6 - h, ANT[1]), (0.50, ANT[1]),
-    ]
-    bus = [
-        (12.20, 0.50), (35.90, 0.50), (35.90, 28.90), (bx6 + h, 28.90),
-        (bx6 + h, 4.85), (12.20, 4.85),
-    ]
+    x0 = BOARD_X0 + 0.50
+    mcu = [(x0, 0.50), (XB - h, 0.50), (XB - h, BOARD_H - 0.50), (x0, BOARD_H - 0.50)]
+    bus = [(XB + h, 0.50), (BOARD_W - 0.50, 0.50), (BOARD_W - 0.50, BOARD_H - 0.50), (XB + h, BOARD_H - 0.50)]
     return [
         ("GND_MCU", "F.Cu", mcu), ("GND_MCU", "B.Cu", mcu),
         ("GND_BUS", "F.Cu", bus), ("GND_BUS", "B.Cu", bus),
@@ -1540,13 +1606,13 @@ def check_board():
                 )
 
     # Edge, slot, antenna, M3.
-    sx0, sy0, sx1, sy1 = SLOT
+    sx0, sy0, sx1, sy1 = SLOT or (-9.0, -9.0, -9.0, -9.0)
     ax0, ay0, ax1, ay1 = ANT
     holes = [p for p in PADS if p.drill >= 3.0]
     npth = [p for p in PADS if p.pin == "" and p.drill > 0]
 
     def consider_box(net, layer, x0, y0, x1, y1, label):
-        if x0 < EDGE_COPPER or y0 < EDGE_COPPER or BOARD_W - x1 < EDGE_COPPER or BOARD_H - y1 < EDGE_COPPER:
+        if x0 < BOARD_X0 + EDGE_COPPER or y0 < EDGE_COPPER or BOARD_W - x1 < EDGE_COPPER or BOARD_H - y1 < EDGE_COPPER:
             err(f"edge {label} box ({x0:.2f},{y0:.2f})-({x1:.2f},{y1:.2f})")
         if x0 < sx1 + 0.31 and x1 > sx0 - 0.31 and y0 < sy1 + 0.31 and y1 > sy0 - 0.31:
             err(f"slot {label}")
@@ -1685,6 +1751,14 @@ def check_holes():
             gap = math.hypot(a.x - b.x, a.y - b.y) - a.drill / 2 - b.drill / 2
             if gap < 0.25:
                 errors.append(f"via holes ({a.x:.2f},{a.y:.2f}) and ({b.x:.2f},{b.y:.2f}) are {gap:.2f} mm apart, min 0.25")
+    for v in VIAS:
+        for p in PADS:
+            if not p.drill:
+                continue
+            # A slot counts as a round hole of its long side, which covers it.
+            gap = math.hypot(v.x - p.x, v.y - p.y) - v.drill / 2 - p.drill / 2
+            if gap < 0.25:
+                errors.append(f"via hole ({v.x:.2f},{v.y:.2f}) is {gap:.2f} mm from the hole of {p.ref}.{p.pin or 'NPTH'}, min 0.25")
     return errors
 
 
@@ -1704,10 +1778,10 @@ def check_module_pads():
 
 def _dot_problems(ref, x, y, placed):
     out = DOT_R + DOT_W / 2
-    sx0, sy0, sx1, sy1 = SLOT
+    sx0, sy0, sx1, sy1 = SLOT or (-9.0, -9.0, -9.0, -9.0)
     tag = f"silk dot {ref} ({x:.2f},{y:.2f})"
     probs = []
-    if min(x, y, BOARD_W - x, BOARD_H - y) - out < 0.4:
+    if min(x - BOARD_X0, y, BOARD_W - x, BOARD_H - y) - out < 0.4:
         probs.append(f"{tag} too close to the board edge")
     for p in PADS:
         if p.drill and p.pin == "":
@@ -1738,9 +1812,18 @@ def _dot_problems(ref, x, y, placed):
         d = _point_rect(x, y, p.x - p.hw, p.y - p.hh, p.x + p.hw, p.y + p.hh)
         dist[p.pin] = min(d, dist.get(p.pin, 1e9))
     others = [d for pin, d in dist.items() if pin != "1"]
-    if "1" not in dist or (others and dist["1"] + 0.3 > min(others)):
+    if "1" not in dist or (others and dist["1"] + PIN1_MARGIN.get(ref, 0.3) > min(others)):
         near = min(dist, key=dist.get) if dist else "?"
         probs.append(f"{tag} nearest pin is {ref}.{near}, not pin 1")
+    # Visible: not under the part's own body.
+    if ref in PIN1_BODY:
+        part = next(q for q in PARTS if q.ref == ref)
+        x0, y0, x1, y1 = PIN1_BODY[ref]
+        pts = [rot_xy(a, b, part.rot) for a, b in ((x0, y0), (x1, y1))]
+        bx0, bx1 = part.x + min(p[0] for p in pts), part.x + max(p[0] for p in pts)
+        by0, by1 = part.y + min(p[1] for p in pts), part.y + max(p[1] for p in pts)
+        if _point_rect(x, y, bx0, by0, bx1, by1) < out + 0.1:
+            probs.append(f"{tag} under the body of {ref}")
     # Visible: not inside another part's courtyard.
     for part in PARTS:
         if part.ref == ref or not part.courtyard:
@@ -1859,22 +1942,28 @@ def write_pcb(path: Path):
         )
 
     for part in PARTS:
+        back = part_side(part) == "B"
+        fl = "B" if back else "F"
         w(f'\t(footprint "{part.footprint}"')
-        w(f'\t\t(layer "F.Cu") (uuid "{uid()}")')
+        w(f'\t\t(layer "{fl}.Cu") (uuid "{uid()}")')
         rot = f" {num(part.rot)}" if part.rot else ""
         w(f"\t\t(at {num(part.x)} {num(part.y)}{rot})")
-        prop("Reference", part.ref, "F.SilkS", True)
-        prop("Value", part.value, "F.Fab", True)
-        prop("Footprint", part.footprint, "F.Fab")
-        prop("Datasheet", "", "F.Fab")
-        ident = f"LCSC {part.lcsc}" if str(part.lcsc).startswith("C") else f"order {part.lcsc}"
-        prop("Description", f"{part.mfr} {part.mpn} {ident}", "F.Fab")
-        w(f"\t\t(attr {part.attr})")
+        prop("Reference", part.ref, f"{fl}.SilkS", True)
+        prop("Value", part.value, f"{fl}.Fab", True)
+        prop("Footprint", part.footprint, f"{fl}.Fab")
+        prop("Datasheet", "", f"{fl}.Fab")
+        if part.mpn:
+            ident = f"LCSC {part.lcsc}" if str(part.lcsc).startswith("C") else "order by MPN"
+            prop("Description", f"{part.mfr} {part.mpn} {ident}", f"{fl}.Fab")
+        else:
+            prop("Description", "test pad, not assembled", f"{fl}.Fab")
+        attr = "smd exclude_from_pos_files exclude_from_bom" if part.attr == "board_only" else part.attr
+        w(f"\t\t(attr {attr})")
         if part.courtyard:
             x0, y0, x1, y1 = part.courtyard
-            w(f'\t\t(fp_rect (start {num(x0)} {num(y0)}) (end {num(x1)} {num(y1)}) (stroke (width 0.05) (type default)) (fill none) (layer "F.CrtYd") (uuid "{uid()}"))')
+            w(f'\t\t(fp_rect (start {num(x0)} {num(y0)}) (end {num(x1)} {num(y1)}) (stroke (width 0.05) (type default)) (fill none) (layer "{fl}.CrtYd") (uuid "{uid()}"))')
         for p in part.pads:
-            _emit_pad(w, p, part.rot)
+            _emit_pad(w, p, part.rot, thermal=part.ref in THERMAL_RELIEF_REFS and p.get("net") == "GND_MCU")
         w("\t)")
 
     for i, (x, y) in enumerate(m3_holes(), start=1):
@@ -1896,48 +1985,52 @@ def write_pcb(path: Path):
             f'(stroke (width {width}) (type default)) (layer "{layer}") (uuid "{uid()}"))'
         )
 
-    # Outline and the unplated isolation slot.
-    line(0, 0, BOARD_W, 0, "Edge.Cuts")
+    # Outline: a rectangle from BOARD_X0; the module's antenna sticks out past its left edge.
+    # Then the unplated isolation slot, if any.
+    line(BOARD_X0, 0, BOARD_W, 0, "Edge.Cuts")
     line(BOARD_W, 0, BOARD_W, BOARD_H, "Edge.Cuts")
-    line(BOARD_W, BOARD_H, 0, BOARD_H, "Edge.Cuts")
-    line(0, BOARD_H, 0, 0, "Edge.Cuts")
-    x0, y0, x1, y1 = SLOT
-    line(x0, y0, x1, y0, "Edge.Cuts")
-    line(x1, y0, x1, y1, "Edge.Cuts")
-    line(x1, y1, x0, y1, "Edge.Cuts")
-    line(x0, y1, x0, y0, "Edge.Cuts")
+    line(BOARD_W, BOARD_H, BOARD_X0, BOARD_H, "Edge.Cuts")
+    line(BOARD_X0, BOARD_H, BOARD_X0, 0, "Edge.Cuts")
+    if SLOT:
+        x0, y0, x1, y1 = SLOT
+        line(x0, y0, x1, y0, "Edge.Cuts")
+        line(x1, y0, x1, y1, "Edge.Cuts")
+        line(x1, y1, x0, y1, "Edge.Cuts")
+        line(x0, y1, x0, y0, "Edge.Cuts")
 
-    def silk(text, x, y, rot=0, size=0.9, justify="left", width=None):
-        just = f" (justify {justify})" if justify != "center" else ""
+    def silk(text, x, y, rot=0, size=0.9, justify="left", width=None, layer="F.SilkS"):
+        parts = [justify] if justify != "center" else []
+        if layer.startswith("B."):
+            parts.append("mirror")
+        just = f" (justify {' '.join(parts)})" if parts else ""
         w(
-            f'\t(gr_text "{text}" (at {num(x)} {num(y)} {num(rot)}) (layer "F.SilkS") (uuid "{uid()}") '
+            f'\t(gr_text "{text}" (at {num(x)} {num(y)} {num(rot)}) (layer "{layer}") (uuid "{uid()}") '
             f"(effects (font (size {size} {width or size}) (thickness 0.15)){just}))"
         )
 
-    # Terminal names behind J1's body (back face at x = 30.25), one per pin, centred on it and
-    # read from the right edge. They stay visible after assembly.
+    # Terminal names behind J1's body (back face 3.20 mm left of the pin row), one per pin,
+    # right-aligned against it, so they stay readable after assembly.
     j1 = next(q for q in PARTS if q.ref == "J1")
-    for name, pin in (("DOOR", "1"), ("CHIME", "2"), ("FLOOR", "3"), ("GND", "4")):
-        silk(name, 29.55, at("J1", pin)[1], 90, 0.8, "center", 0.6)
-    # J1 assembly marks. The pin row sits 3.60 mm from the back and 3.70 mm from the wire face,
-    # so the holes do not show which way round the block goes: the back face and both ends of
-    # the body are drawn, and an arrow between each pair of pins points at the wire openings.
     xb = j1.x - TB_BACK
+    for name, pin in (("DOOR", "1"), ("CHIME", "2"), ("FLOOR", "3"), ("GND", "4")):
+        silk(name, xb - 0.25, at("J1", pin)[1], 0, 0.8, "right", 0.55)
+    # J1 assembly marks. The holes do not show which way round the block goes, so the back
+    # face and both ends of the body are drawn, and an arrow between each pair of pins points
+    # at the wire openings (the right edge).
     yt, yb = j1.y - TB_END, j1.y + 3 * TB_PITCH + TB_END
     for x1, y1, x2, y2 in ((xb, yt, xb, yb), (xb, yt, BOARD_W - 0.4, yt), (xb, yb, BOARD_W - 0.4, yb)):
         line(x1, y1, x2, y2, "F.SilkS", 0.15)
     for k in range(3):
         ym = j1.y + (k + 0.5) * TB_PITCH
-        pts = " ".join(f"(xy {num(x)} {num(y)})" for x, y in ((34.45, ym - 0.35), (35.35, ym), (34.45, ym + 0.35)))
+        ax = j1.x + TB_PAD / 2.0 + 0.30
+        pts = " ".join(f"(xy {num(x)} {num(y)})" for x, y in ((ax, ym - 0.32), (ax + 0.75, ym), (ax, ym + 0.32)))
         w(f'\t(gr_poly (pts {pts}) (stroke (width 0.1) (type solid)) (fill solid) (layer "F.SilkS") (uuid "{uid()}"))')
-    # Notes in the two empty corners beside the antenna (no copper there, visible after
-    # assembly; the module covers x 8.2..21.4).
-    silk(NAME, 0.8, 27.0, 0, 0.9, width=0.8)
-    silk(f"v{VERSION}", 0.8, 28.5, 0, 0.8, width=0.7)
-    silk("ANTENNA", 0.8, 29.85, 0, 0.8, width=0.7)
-    silk("NO +24V", 21.9, 27.0, 0, 0.8, width=0.65)
-    silk("GND ISOLATED", 21.9, 28.3, 0, 0.8, width=0.6)
-    silk("OK1 OUTPUT", 11.3, 7.8, 0, 0.8)
+    for text, x, y, width, layer, rot in silk_notes():
+        silk(text, x, y, rot, 0.8, "right" if layer.startswith("B.") else "left", width, layer=layer)
+    # Test pads on the back: bridge BOOT to GND while plugging in USB for download mode.
+    for ref, label in (("TP1", "BOOT"), ("TP2", "GND")):
+        tpp = pads_of(ref)[0]
+        silk(label, tpp.x + 1.15, tpp.y, 0, 0.8, "right", 0.6, layer="B.SilkS")
     for _ref, dx, dy in PIN1_DOTS:
         w(
             f'\t(gr_circle (center {num(dx)} {num(dy)}) (end {num(dx + DOT_R)} {num(dy)}) '
@@ -1957,8 +2050,10 @@ def write_pcb(path: Path):
         )
     for name, layer, poly in zones():
         _zone(w, name, layer, poly, keepout=False)
-    _zone(w, "", "F.Cu", [(ANT[0], ANT[1]), (ANT[2], ANT[1]), (ANT[2], ANT[3]), (ANT[0], ANT[3])], keepout=True)
-    _zone(w, "", "B.Cu", [(ANT[0], ANT[1]), (ANT[2], ANT[1]), (ANT[2], ANT[3]), (ANT[0], ANT[3])], keepout=True)
+    # The antenna keep-out as KiCad rule areas, so KiCad's DRC enforces it too.
+    ant = [(ANT[0], ANT[1]), (ANT[2], ANT[1]), (ANT[2], ANT[3]), (ANT[0], ANT[3])]
+    for layer in ("F.Cu", "B.Cu"):
+        _zone(w, "", layer, ant, keepout=True, pads="not_allowed", rule_name="Antenna keep-out")
     # Keep the pours off the M3 holes by 0.6 mm.
     for x, y in m3_holes():
         octagon = []
@@ -1971,7 +2066,7 @@ def write_pcb(path: Path):
     path.write_text("\n".join(L) + "\n", encoding="utf-8")
 
 
-def _emit_pad(w, p, rot=0):
+def _emit_pad(w, p, rot=0, thermal=False):
     # KiCad 10 keeps pad size in the footprint's unrotated frame. For a 90° or
     # 270° footprint the pitch axis would keep the long pad side, so swap here.
     shape = "circle" if p.get("round") else ("oval" if p.get("oval") else "roundrect")
@@ -1993,7 +2088,9 @@ def _emit_pad(w, p, rot=0):
         w(f"\t\t\t(drill oval {num(dx)} {num(dy)})")
     elif p.get("drill"):
         w(f'\t\t\t(drill {num(p["drill"])})')
-    if kind == "smd":
+    if kind == "smd" and p.get("layer") == "B":
+        w('\t\t\t(layers "B.Cu" "B.Mask")')
+    elif kind == "smd":
         w('\t\t\t(layers "F.Cu" "F.Paste" "F.Mask")')
         w("\t\t\t(roundrect_rratio 0.15)")
     else:
@@ -2002,21 +2099,25 @@ def _emit_pad(w, p, rot=0):
     net = p.get("net") or ""
     if net:
         w(f'\t\t\t(net {net_id(net)} "{net}")')
+    if thermal:
+        w("\t\t\t(zone_connect 1)")
     w(f'\t\t\t(uuid "{uid()}")')
     w("\t\t)")
 
 
-def _zone(w, name, layer, poly, keepout, allow_tracks=False):
+def _zone(w, name, layer, poly, keepout, allow_tracks=False, pads="allowed", rule_name=None):
     nid = net_id(name) if name else 0
     w("\t(zone")
     w(f"\t\t(net {nid})")
     w(f'\t\t(net_name "{name}")')
     w(f'\t\t(layer "{layer}")')
     w(f'\t\t(uuid "{uid()}")')
+    if rule_name:
+        w(f'\t\t(name "{rule_name}")')
     w("\t\t(hatch edge 0.5)")
     w("\t\t(priority 0)")
-    # SMD pads connect solid; through-hole pads keep a thermal spoke.
-    # The module corner pad and R6 have no room for two spokes.
+    # SMD pads connect solid unless the pad asks for spokes (THERMAL_RELIEF_REFS); through-hole
+    # pads keep a thermal spoke.
     # Clearance to every other net stays 0.3 mm.
     if keepout:
         w("\t\t(connect_pads (clearance 0.3))")
@@ -2026,7 +2127,7 @@ def _zone(w, name, layer, poly, keepout, allow_tracks=False):
     w("\t\t(filled_areas_thickness no)")
     if keepout:
         tracks = "allowed" if allow_tracks else "not_allowed"
-        w(f"\t\t(keepout (tracks {tracks}) (vias {tracks}) (pads allowed) (copperpour not_allowed) (footprints allowed))")
+        w(f"\t\t(keepout (tracks {tracks}) (vias {tracks}) (pads {pads}) (copperpour not_allowed) (footprints allowed))")
         w("\t\t(fill (thermal_gap 0.3) (thermal_bridge_width 0.4))")
     else:
         w("\t\t(fill yes (thermal_gap 0.3) (thermal_bridge_width 0.4))")
@@ -2120,7 +2221,7 @@ def write_pro(path: Path):
 
 
 def bom_order(part):
-    order = ("U", "J", "OK", "R", "C", "SW")
+    order = ("U", "J", "OK", "R", "C", "SW", "TP")
     prefix = part.ref.rstrip("0123456789")
     return (order.index(prefix) if prefix in order else len(order), int(part.ref[len(prefix):] or 0))
 
@@ -2129,70 +2230,185 @@ def bom_order(part):
 DESCRIPTION = {
     "ESP32-C6-MINI-1-N4": "ESP32-C6 module, 4 MB flash, PCB antenna",
     "AP2112K-3.3TRG1": "LDO 3.3 V 600 mA",
-    "USBLC6-2SC6": "USB ESD protection, 2 lines + VBUS",
-    "WJ124-3.81-04P-14-00A": "Screw terminal, 4 pins, pitch 3.81 mm, 8.6 mm high",
+    "USBLC6-2P6": "USB ESD protection, 2 lines + VBUS, SOT-666",
+    "DB125-2.54-4P-GN-S": "Screw terminal, 4 pins, pitch 2.54 mm, 8.4 mm high",
     "TYPE-C-31-M-12": "USB-C receptacle 16P, SMD with through-hole shell lugs",
-    "LTV-817S-TA1-C": "Optocoupler, transistor output, CTR rank C (200-400 %)",
-    "0805W8F2200T5E": "Resistor 220 ohm 1 % 0805",
-    "RC-12K1501FT": "Resistor 1.5 kohm 1 % 1 W 2512",
-    "0805W8F1002T5E": "Resistor 10 kohm 1 % 0805",
-    "0805W8F1003T5E": "Resistor 100 kohm 1 % 0805",
+    "LTV-357T-C": "Optocoupler SO-4, transistor output, CTR rank C (200-400 %)",
+    "0603WAF2200T5E": "Resistor 220 ohm 1 % 0603",
+    "RC1210FR-071K5L": "Resistor 1.5 kohm 1 % 0.5 W 1210",
+    "0603WAF1002T5E": "Resistor 10 kohm 1 % 0603",
+    "0603WAF1003T5E": "Resistor 100 kohm 1 % 0603",
     "0603WAF5101T5E": "Resistor 5.1 kohm 1 % 0603",
-    "CL21A106KOQNNNE": "Capacitor 10 uF 16 V X5R 0805",
-    "CL21B104KBFNNNE": "Capacitor 100 nF 50 V X7R 0805",
-    "CL21B105KBFNNNE": "Capacitor 1 uF 50 V X7R 0805",
-    "TS-1187A-B-A-B": "Tactile switch 5.1 x 5.1 mm, 1.5 mm high",
+    "CL10A106KP8NNNC": "Capacitor 10 uF 10 V X5R 0603",
+    "CL10B104KB8NNNC": "Capacitor 100 nF 50 V X7R 0603",
+    "CL10A105KB8NNNC": "Capacitor 1 uF 50 V X5R 0603",
 }
 
 
-def write_bom(path: Path):
+def part_side(part):
+    return "B" if part.pads and all(q.get("layer") == "B" for q in part.pads) else "F"
+
+
+def assembled(part):
+    return part.attr != "board_only"
+
+
+# BOM columns as in PCBWay's BOM quotation (the customer's columns; PCBWay adds prices and
+# delivery times). The LCSC number goes in "Vendor Part #", as PCBWay put it there.
+BOM_HEADER = ["Item #", "*Designator", "*Qty", "Manufacturer", "*Mfg Part #", "Description / Value",
+              "Vendor Part #", "*Package/Footprint", "Mounting Type", "Customer Reply"]
+BOM_WIDTHS = [7, 18, 6, 18, 20, 56, 13, 46, 14, 52]
+# Parts PCBWay must not swap: the module, the ESD array, the optocouplers and both connectors
+# (J2's land follows HRO's drawing, J1's DORABO's).
+NO_SUBSTITUTE = ("ESP32-C6-MINI-1-N4", "USBLC6-2P6", "LTV-357T-C", "DB125-2.54-4P-GN-S", "TYPE-C-31-M-12")
+
+
+def bom_note(part):
+    # Sourcing note for the "Customer Reply" column.
+    if part.mpn in NO_SUBSTITUTE:
+        return "No substitute"
+    if part.mpn == "RC1210FR-071K5L":
+        return "Any 1.5 kohm 1210, min. 0.5 W"
+    if part.ref.startswith("R"):
+        return "Equivalent OK: same value, size and rating"
+    if part.ref.startswith("C"):
+        return "Equivalent OK: same value, size, voltage and dielectric"
+    return ""
+
+
+def bom_rows():
     # One line per part number with its quantity, as PCBWay's BOM template asks.
     groups = {}
-    for p in sorted(PARTS, key=bom_order):
+    for p in sorted((q for q in PARTS if assembled(q)), key=bom_order):
         groups.setdefault(p.mpn, []).append(p)
+    rows = [BOM_HEADER]
+    for item, parts in enumerate(groups.values(), start=1):
+        p = parts[0]
+        kind = "THT" if p.attr == "through_hole" else "SMD"
+        rows.append([item, ", ".join(q.ref for q in parts), len(parts), p.mfr, p.mpn, DESCRIPTION[p.mpn],
+                     p.lcsc, p.footprint, kind, bom_note(p)])
+    return rows
+
+
+def write_bom(path: Path):
+    rows = bom_rows()
     with path.open("w", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
-        writer.writerow(["Item", "Designator", "Qty", "Manufacturer", "Mfg Part #", "Description",
-                         "Value", "Package", "Type", "LCSC"])
-        for item, parts in enumerate(groups.values(), start=1):
-            p = parts[0]
-            kind = "THT" if p.attr == "through_hole" else "SMD"
-            value = " / ".join(dict.fromkeys(q.value for q in parts))
-            writer.writerow([item, ", ".join(q.ref for q in parts), len(parts), p.mfr, p.mpn,
-                             DESCRIPTION[p.mpn], value, p.footprint, kind, p.lcsc])
+        csv.writer(f).writerows(rows)
+    write_xlsx(path.with_suffix(".xlsx"), "BOM", rows, BOM_WIDTHS)
+
+
+def write_xlsx(path: Path, sheet: str, rows, widths):
+    # A plain one-sheet workbook from the standard library: bold, shaded header row frozen at
+    # the top, thin borders, fixed column widths, printed landscape on one page width. Fixed zip
+    # dates keep the file reproducible.
+    from xml.sax.saxutils import escape
+
+    def ref(r, c):
+        name = ""
+        c += 1
+        while c:
+            c, rem = divmod(c - 1, 26)
+            name = chr(65 + rem) + name
+        return f"{name}{r + 1}"
+
+    def cell(r, c, v):
+        style = 1 if r == 0 else 2
+        if isinstance(v, (int, float)) and not isinstance(v, bool):
+            return f'<c r="{ref(r, c)}" s="{style}"><v>{v}</v></c>'
+        return f'<c r="{ref(r, c)}" s="{style}" t="inlineStr"><is><t>{escape(str(v))}</t></is></c>'
+
+    ns = 'xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"'
+    rel = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+    pkg = "http://schemas.openxmlformats.org/package/2006/relationships"
+    ct = "application/vnd.openxmlformats-officedocument.spreadsheetml"
+    cols = "".join(f'<col min="{i}" max="{i}" width="{w}" customWidth="1"/>' for i, w in enumerate(widths, start=1))
+    data = "".join(f'<row r="{r + 1}">' + "".join(cell(r, c, v) for c, v in enumerate(row)) + "</row>"
+                   for r, row in enumerate(rows))
+    last = ref(len(rows) - 1, len(rows[0]) - 1)
+    files = {
+        "[Content_Types].xml":
+            '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+            '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+            '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+            '<Default Extension="xml" ContentType="application/xml"/>'
+            f'<Override PartName="/xl/workbook.xml" ContentType="{ct}.sheet.main+xml"/>'
+            f'<Override PartName="/xl/worksheets/sheet1.xml" ContentType="{ct}.worksheet+xml"/>'
+            f'<Override PartName="/xl/styles.xml" ContentType="{ct}.styles+xml"/></Types>',
+        "_rels/.rels":
+            f'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="{pkg}">'
+            f'<Relationship Id="rId1" Type="{rel}/officeDocument" Target="xl/workbook.xml"/></Relationships>',
+        "xl/workbook.xml":
+            f'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook {ns} xmlns:r="{rel}">'
+            f'<sheets><sheet name="{escape(sheet)}" sheetId="1" r:id="rId1"/></sheets></workbook>',
+        "xl/_rels/workbook.xml.rels":
+            f'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="{pkg}">'
+            f'<Relationship Id="rId1" Type="{rel}/worksheet" Target="worksheets/sheet1.xml"/>'
+            f'<Relationship Id="rId2" Type="{rel}/styles" Target="styles.xml"/></Relationships>',
+        "xl/styles.xml":
+            f'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet {ns}>'
+            '<fonts count="2"><font><sz val="10"/><name val="Arial"/></font>'
+            '<font><b/><sz val="10"/><name val="Arial"/></font></fonts>'
+            '<fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill>'
+            '<fill><patternFill patternType="solid"><fgColor rgb="FFD9D9D9"/><bgColor indexed="64"/></patternFill></fill></fills>'
+            '<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border>'
+            '<border><left style="thin"/><right style="thin"/><top style="thin"/><bottom style="thin"/><diagonal/></border></borders>'
+            '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'
+            '<cellXfs count="3"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>'
+            '<xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"/>'
+            '<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1"/></cellXfs>'
+            '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>',
+        "xl/worksheets/sheet1.xml":
+            f'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet {ns}>'
+            '<sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>'
+            f'<dimension ref="A1:{last}"/>'
+            '<sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/>'
+            '</sheetView></sheetViews>'
+            f'<cols>{cols}</cols><sheetData>{data}</sheetData>'
+            '<pageMargins left="0.4" right="0.4" top="0.5" bottom="0.5" header="0.3" footer="0.3"/>'
+            '<pageSetup paperSize="9" orientation="landscape" fitToWidth="1" fitToHeight="0"/></worksheet>',
+    }
+    with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as zf:
+        for name, text in files.items():
+            info = zipfile.ZipInfo(name, date_time=(1980, 1, 1, 0, 0, 0))
+            info.compress_type = zipfile.ZIP_DEFLATED
+            zf.writestr(info, text)
 
 
 def write_cpl(path: Path):
     # Origin lower left, Y up, rotation CCW. The board file is Y down from the top left, so the
-    # lower-left outline corner is (0, BOARD_H) and Mid Y is BOARD_H - y. The angle needs no
+    # outline's lower-left corner is (BOARD_X0, BOARD_H): Mid X is x - BOARD_X0 and Mid Y is
+    # BOARD_H - y. The angle needs no
     # change: KiCad's positive angle is counter-clockwise on screen, as in a Y-up top view.
     # PCBWay's library zero-rotation can differ. Confirm the preview before paying.
     with path.open("w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         writer.writerow(["Designator", "Mid X", "Mid Y", "Layer", "Rotation"])
-        for p in sorted(PARTS, key=bom_order):
-            # J1's footprint origin is pin 1; its body centre is 5.715 mm along the pin row and
-            # 0.05 mm toward the wire face. Every other footprint's origin is its body centre.
+        for p in sorted((q for q in PARTS if assembled(q)), key=bom_order):
+            # J1's footprint origin is pin 1; its body centre is 3.81 mm along the pin row and
+            # 0.05 mm toward the back face. Every other footprint's origin is its body centre.
             ox, oy = BODY_CENTRE.get(p.footprint, (0.0, 0.0))
             dx, dy = rot_xy(ox, oy, p.rot)
-            writer.writerow([p.ref, f"{p.x + dx:.4f}", f"{BOARD_H - (p.y + dy):.4f}", "top", f"{p.rot:.1f}"])
+            writer.writerow([p.ref, f"{p.x + dx - BOARD_X0:.4f}", f"{BOARD_H - (p.y + dy):.4f}", "top", f"{p.rot:.1f}"])
 
 
-BODY_CENTRE = {"TerminalBlock_Kangnex_WJ124-3.81_1x04_P3.81mm": (1.5 * TB_PITCH, (TB_BACK - TB_FRONT) / 2.0)}
+BODY_CENTRE = {"TerminalBlock_DORABO_DB125-2.54_1x04_P2.54mm": (1.5 * TB_PITCH, (TB_BACK - TB_FRONT) / 2.0)}
 
 
 def write_remarks(path: Path):
     # Pasted as is into PCBWay's remark field, which takes at most 600 characters.
+    # The panel note keeps tabs off the bottom edge beside C1, C2, C3 and C5 (0.5 mm in).
     text = (
-        f"{NAME} v{VERSION}. Internal slot is unplated: do not plate or fill it. "
-        "2x 0.65 mm NPTH = USB-C locating pegs. "
-        "Solder the 4 USB-C shell lugs and all 4 pins of J1. "
-        "J1 wire openings face the right edge (silk arrows). "
-        "J1 overhangs the right edge 1.15 mm, USB-C the left edge 0.25 mm. "
-        "U3 pin 4 has no track on purpose. GND_MCU and GND_BUS are separate on purpose. "
-        "No substitutes for U1, U3, OK1-OK3, J1, R2/R3 (1.5k 1W); other R/C: equivalents OK. "
-        "CPL: origin lower left, mm, Y up, KiCad CCW rotation, J1 at body centre. "
-        "Please confirm part orientation in the preview."
+        "2x 0.6 mm NPTH = USB-C locating pegs. "
+        "Solder all 4 USB-C shell lugs and all 4 J1 pins. "
+        "J1 wire openings face the right edge (arrows). "
+        "On purpose: J1 overhangs the right edge 0.9 mm, USB-C the top edge 0.46 mm, "
+        "U1 antenna the left edge 5.2 mm; U3 pins 3 and 6 have no track; "
+        "GND_MCU and GND_BUS are separate. "
+        "TP1/TP2 (back): bare pads. "
+        "Panel: tab-route, 6 mm free left of each board, no tabs on bottom edge left of J1. "
+        "No substitutes for U1, U3, OK1-OK3, J1, J2. R2/R3: 1.5k 1210, min. 0.5 W. "
+        "Other R/C: equivalents OK. "
+        "CPL: mm, origin lower left of board, Y up, KiCad CCW angles, J1 at body centre."
     )
     assert len(text) <= 600, f"PCBWay remark is {len(text)} characters, max 600"
     path.write_text(text + "\n", encoding="utf-8")
@@ -2232,9 +2448,11 @@ def render():
             rect = [min(p1[0], p2[0]), min(p1[1], p2[1]), max(p1[0], p2[0]), max(p1[1], p2[1])]
             dr.rectangle(rect, outline=outline, fill=fill)
 
-        box(0, 0, BOARD_W, BOARD_H, outline=(20, 20, 20))
-        x0, y0, x1, y1 = SLOT
-        box(x0, y0, x1, y1, outline=(180, 40, 40))
+        corners = [(BOARD_X0, 0), (BOARD_W, 0), (BOARD_W, BOARD_H), (BOARD_X0, BOARD_H)]
+        dr.polygon([xy(x, y) for x, y in corners], outline=(20, 20, 20))
+        if SLOT:
+            x0, y0, x1, y1 = SLOT
+            box(x0, y0, x1, y1, outline=(180, 40, 40))
         ax0, ay0, ax1, ay1 = ANT
         box(ax0, ay0, ax1, ay1, outline=(180, 140, 40))
         for s in SEGS:
@@ -2334,6 +2552,7 @@ def write_fab(errors: list[str]):
             shutil.copy(f, out / f.name)
     write_remarks(out / "PCBWAY-REMARKS.txt")
     shutil.copy(ROOT / "bom.csv", out / "bom.csv")
+    shutil.copy(ROOT / "bom.xlsx", out / "bom.xlsx")
     shutil.copy(ROOT / "cpl.csv", out / "cpl.csv")
     zip_path = out / f"{SLUG}-v{VERSION}-pcbway.zip"
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
