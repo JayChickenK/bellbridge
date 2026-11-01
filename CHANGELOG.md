@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased]
+
+- KiCad schematic `hardware/bellbridge.kicad_sch`, drawn from the v1.12 board with the same
+  references, values, footprints and net names. KiCad's ERC and its schematic-to-board check
+  can now run; `generate.py` does not update the schematic.
+- `generate.py` gives the project's Default net class a wire width, so the schematic's wires
+  appear in KiCad's PDF and SVG plots.
+
 ## [1.12] - 2026-11-01
 
 <!-- TODO after testing: add a line about the test result. -->

@@ -216,6 +216,7 @@ most 0.1 N·m. Rated 150 V / 7 A (UL), −40 to +105 °C.
 | --- | --- |
 | `generate.py` | the design: placement, routing, checks, all outputs |
 | `bellbridge.kicad_pcb`, `bellbridge.kicad_pro` | KiCad board (ground pours are unfilled; press **B** in KiCad to fill them) |
+| `bellbridge.kicad_sch` | schematic of the board with the same references, values, footprints and net names, so KiCad's ERC and its schematic-to-board check can run; `generate.py` does not write it, so update it by hand after a board change |
 | `bom.csv`, `bom.xlsx` | bill of materials in the columns of PCBWay's BOM quotation: Item #, *Designator, *Qty, Manufacturer, *Mfg Part #, Description / Value, Vendor Part # (LCSC), *Package/Footprint, Mounting Type, Customer Reply (what may be substituted); the same table as text and as a spreadsheet |
 | `cpl.csv` | placement: origin at the board's lower-left corner, mm, Y up, KiCad rotation; J1 at its body centre |
 | `pcbway/` | Gerbers, drill files, job file, BOM, CPL, `PCBWAY-REMARKS.txt` and the order zip `bellbridge-v1.12-pcbway.zip` |

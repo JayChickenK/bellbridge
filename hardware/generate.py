@@ -2187,6 +2187,8 @@ _PLOT = """\t\t(pcbplotparams
 
 
 def write_pro(path: Path):
+    # The schematic (bellbridge.kicad_sch) draws its wires at the Default net class's width;
+    # without wire_width KiCad plots them 0 mm wide, so they vanish from PDF/SVG output.
     path.write_text(
         """{
   "board": {
@@ -2214,7 +2216,10 @@ def write_pro(path: Path):
         "via_diameter": 0.65,
         "via_drill": 0.3,
         "diff_pair_width": 0.25,
-        "diff_pair_gap": 0.2
+        "diff_pair_gap": 0.2,
+        "wire_width": 6,
+        "bus_width": 12,
+        "line_style": 0
       }
     ]
   },
