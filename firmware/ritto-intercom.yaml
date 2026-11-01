@@ -1,4 +1,4 @@
-# BellBridge (v1.0 and v1.1) - ESPHome firmware for the Ritto 7630 TwinBus intercom board.
+# BellBridge (v1.0, v1.1 and v1.12) - ESPHome firmware for the Ritto 7630 TwinBus intercom board.
 #
 # Based on esphome/ritto-intercom.yaml from https://github.com/duramson/ritto-esp
 # (MIT License, Copyright (c) 2026 Cedrik Theesen). Ids and entity names are unchanged, so
@@ -188,7 +188,7 @@ binary_sensor:
 
 switch:
   # Door opener (TUER, GPIO19 -> R1 -> OK1). Internal: driven only by the scripts
-  # above, never toggled directly from HA. R6 (100 k to GND) holds the pin low from
+  # above, never toggled directly from HA. R6 (10 k to GND) holds the pin low from
   # reset until this switch drives it, so the door does not buzz while the module boots.
   - platform: gpio
     pin: GPIO19  # BellBridge (XIAO D8)

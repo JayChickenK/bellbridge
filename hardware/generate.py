@@ -1,4 +1,4 @@
-# BellBridge v1.1: generator for the PCBWay-assembled Ritto 7630 TwinBus / ESP32-C6 board.
+# BellBridge v1.12: generator for the PCBWay-assembled Ritto 7630 TwinBus / ESP32-C6 board.
 # Writes the KiCad board, BOM and CPL and, when KiCad's DRC is clean, the PCBWay order zip.
 # Millimetres, KiCad 20240108. KiCad reads this file with the origin at the TOP left and Y
 # pointing DOWN: y = 0 is the top edge of the top view, y = BOARD_H the bottom edge. Footprints
@@ -23,6 +23,9 @@
 # under the USB-C shell's steel plate (CC1 on the back), thermal spokes on the 0603 ground pads,
 # a second VBUS via next to the regulator. Part-fit review: USB-C front lug slots 1.4 mm long
 # as in HRO's drawing (KiCad's library: 1.2 mm).
+# v1.12: the copper of v1.1. R6 10k (the pull-ups' part) instead of 100k, C6 10 uF instead of
+# 1 uF, C2 22 uF at module pin 3 instead of 10 uF; panel note 7 mm free left of each board
+# instead of 6 mm. The order files are written with LF line endings on every platform.
 
 from __future__ import annotations
 
@@ -39,7 +42,7 @@ import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-NAME, VERSION = "BellBridge", "1.1"
+NAME, VERSION = "BellBridge", "1.12"
 SLUG = NAME.lower()
 BOARD_W = 31.4
 BOARD_H = 27.5
@@ -544,17 +547,21 @@ def place_all():
     add_part("R10", "5.1k", "R_0603", 7.85, 9.63, 0, r0603_pads("GND_MCU", "CC2"), "smd", uni, "0603WAF5101T5E", "C23186", c6)
     add_part("R7", "5.1k", "R_0603", 16.81, 4.00, 90, r0603_pads("GND_MCU", "CC1"), "smd", uni, "0603WAF5101T5E", "C23186", c6)
     # Column beside the optocouplers' MCU pads: LED resistor, GPIO19 pull-down, pull-ups. R4 is
-    # turned so that its 3V3 pad faces R5's.
+    # turned so that its 3V3 pad faces R5's. R6 is the pull-ups' 10k part: against the pin's
+    # weak pull-up (about 45k, on only while the chip is held in reset) it keeps GPIO19 near
+    # 0.6 V, below the LED's forward voltage, and it costs 0.33 mA while the LED is on.
     add_part("R1", "220", "R_0603", 18.29, 1.90, 90, r0603_pads("GPIO19", "LED_DOOR"), "smd", uni, "0603WAF2200T5E", "C22962", c6)
-    add_part("R6", "100k", "R_0603", 18.29, 5.15, 90, r0603_pads("GND_MCU", "GPIO19"), "smd", uni, "0603WAF1003T5E", "C25803", c6)
+    add_part("R6", "10k", "R_0603", 18.29, 5.15, 90, r0603_pads("GND_MCU", "GPIO19"), "smd", uni, "0603WAF1002T5E", "C25804", c6)
     add_part("R4", "10k", "R_0603", 18.29, 8.40, 270, r0603_pads("GPIO18", "3V3"), "smd", uni, "0603WAF1002T5E", "C25804", c6)
     add_part("R5", "10k", "R_0603", 18.29, 11.65, 90, r0603_pads("GPIO20", "3V3"), "smd", uni, "0603WAF1002T5E", "C25804", c6)
     # Column right of the module: GPIO8 pull-up level with pin 22, the EN network (pin 8 is on
     # the bottom side; its line comes over on the back) and the regulator's input capacitor.
+    # EN: 10k and 10 uF (C1's part), about 0.1 s of reset delay; Espressif gives 10k + 1 uF as
+    # values to adjust to the power-up timing.
     add_part("R12", "10k", "R_0603", 19.60, 15.80, 0, r0603_pads("GPIO8", "3V3"), "smd", uni, "0603WAF1002T5E", "C25804", c6)
     add_part("R8", "10k", "R_0603", 19.60, 17.30, 0, r0603_pads("EN", "3V3"), "smd", uni, "0603WAF1002T5E", "C25804", c6)
     sam = "Samsung"
-    add_part("C6", "1uF", "C_0603", 19.60, 18.80, 0, c0603_pads("EN", "GND_MCU"), "smd", sam, "CL10A105KB8NNNC", "C15849", c6)
+    add_part("C6", "10uF", "C_0603", 19.60, 18.80, 0, c0603_pads("EN", "GND_MCU"), "smd", sam, "CL10A106KP8NNNC", "C19702", c6)
     add_part("C4", "100nF", "C_0603", 19.60, 20.30, 0, c0603_pads("GND_MCU", "VBUS"), "smd", sam, "CL10B104KB8NNNC", "C1591", c6)
     add_part(
         "U2", "AP2112K-3.3", "SOT-23-5",
@@ -563,11 +570,12 @@ def place_all():
         (-2.05, -1.84, 2.05, 1.7),
     )
     # Strip along the bottom edge, below the module's pins 1-11: 100 nF under pin 3 (its ground
-    # pad toward the module's ground pins 1 and 2), 10 uF beside it, the regulator's output and input capacitors at the right. The 3V3 trunk
+    # pad toward the module's ground pins 1 and 2), 22 uF beside it (Espressif's reference value
+    # at the 3V3 pin), the regulator's output and input capacitors at the right. The 3V3 trunk
     # runs between these and the module's pins.
     ys = 26.55
     add_part("C5", "100nF", "C_0603", 9.40, ys, 180, c0603_pads("3V3", "GND_MCU"), "smd", sam, "CL10B104KB8NNNC", "C1591", c6)
-    add_part("C2", "10uF", "C_0603", 12.40, ys, 0, c0603_pads("3V3", "GND_MCU"), "smd", sam, "CL10A106KP8NNNC", "C19702", c6)
+    add_part("C2", "22uF", "C_0603", 12.40, ys, 0, c0603_pads("3V3", "GND_MCU"), "smd", sam, "CL10A226MQ8NRNC", "C59461", c6)
     add_part("C3", "10uF", "C_0603", 18.30, ys, 0, c0603_pads("3V3", "GND_MCU"), "smd", sam, "CL10A106KP8NNNC", "C19702", c6)
     add_part("C1", "10uF", "C_0603", 21.30, ys, 0, c0603_pads("GND_MCU", "VBUS"), "smd", sam, "CL10A106KP8NNNC", "C19702", c6)
     # 100 nF from U3's VBUS pin to ground, as in ST's USBLC6-2 layout (datasheet figure 18): a
@@ -2237,11 +2245,10 @@ DESCRIPTION = {
     "0603WAF2200T5E": "Resistor 220 ohm 1 % 0603",
     "RC1210FR-071K5L": "Resistor 1.5 kohm 1 % 0.5 W 1210",
     "0603WAF1002T5E": "Resistor 10 kohm 1 % 0603",
-    "0603WAF1003T5E": "Resistor 100 kohm 1 % 0603",
     "0603WAF5101T5E": "Resistor 5.1 kohm 1 % 0603",
     "CL10A106KP8NNNC": "Capacitor 10 uF 10 V X5R 0603",
+    "CL10A226MQ8NRNC": "Capacitor 22 uF 6.3 V X5R 0603",
     "CL10B104KB8NNNC": "Capacitor 100 nF 50 V X7R 0603",
-    "CL10A105KB8NNNC": "Capacitor 1 uF 50 V X5R 0603",
 }
 
 
@@ -2396,7 +2403,9 @@ BODY_CENTRE = {"TerminalBlock_DORABO_DB125-2.54_1x04_P2.54mm": (1.5 * TB_PITCH, 
 
 def write_remarks(path: Path):
     # Pasted as is into PCBWay's remark field, which takes at most 600 characters.
-    # The panel note keeps tabs off the bottom edge beside C1, C2, C3 and C5 (0.5 mm in).
+    # The panel note keeps tabs off the bottom edge beside C1, C2, C3 and C5 (0.5 mm in). The
+    # 7 mm on the left hold the antenna (5.2 mm) plus the left neighbour's J1 overhang (0.9 mm,
+    # at the same height), with room for the module's length tolerance.
     text = (
         "2x 0.6 mm NPTH = USB-C locating pegs. "
         "Solder all 4 USB-C shell lugs and all 4 J1 pins. "
@@ -2405,13 +2414,13 @@ def write_remarks(path: Path):
         "U1 antenna the left edge 5.2 mm; U3 pins 3 and 6 have no track; "
         "GND_MCU and GND_BUS are separate. "
         "TP1/TP2 (back): bare pads. "
-        "Panel: tab-route, 6 mm free left of each board, no tabs on bottom edge left of J1. "
+        "Panel: tab-route, 7 mm free left of each board, no tabs on bottom edge left of J1. "
         "No substitutes for U1, U3, OK1-OK3, J1, J2. R2/R3: 1.5k 1210, min. 0.5 W. "
         "Other R/C: equivalents OK. "
         "CPL: mm, origin lower left of board, Y up, KiCad CCW angles, J1 at body centre."
     )
     assert len(text) <= 600, f"PCBWay remark is {len(text)} characters, max 600"
-    path.write_text(text + "\n", encoding="utf-8")
+    path.write_bytes((text + "\n").encode("utf-8"))  # LF on every platform
 
 
 def render():
@@ -2547,9 +2556,10 @@ def write_fab(errors: list[str]):
         shutil.rmtree(out)
     out.mkdir()
     keep_suffix = {".gtl", ".gbl", ".gts", ".gbs", ".gto", ".gbo", ".gtp", ".gbp", ".gm1", ".drl", ".gbrjob"}
+    # kicad-cli on Windows ends lines with CRLF; the order files keep LF on every platform.
     for f in gerber.iterdir():
         if f.suffix.lower() in keep_suffix or f.name.lower().endswith(".gbrjob"):
-            shutil.copy(f, out / f.name)
+            (out / f.name).write_bytes(f.read_bytes().replace(b"\r\n", b"\n"))
     write_remarks(out / "PCBWAY-REMARKS.txt")
     shutil.copy(ROOT / "bom.csv", out / "bom.csv")
     shutil.copy(ROOT / "bom.xlsx", out / "bom.xlsx")

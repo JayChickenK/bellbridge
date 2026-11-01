@@ -1,5 +1,34 @@
 # Changelog
 
+## [1.12] - 2026-11-01
+
+<!-- TODO after testing: add a line about the test result. -->
+
+Released before the first board was built and tested. The board of v1.1 with three part
+values changed; copper, solder mask, paste, drill files and CPL are the same. The back
+silkscreen reads "BellBridge v1.12".
+
+### Changed from v1.1
+
+- R6, the GPIO19 pull-down: 10 kΩ instead of 100 kΩ, the same part as the pull-ups.
+  While the chip is held in reset, the pin's weak pull-up now lifts GPIO19 to only about
+  0.6 V, so the door optocoupler's LED stays off (v1.1: under 0.1 mA). R6 draws 0.33 mA
+  while the door opener is on.
+- C6 on EN: 10 µF instead of 1 µF, the same part as C1 and C3; about 0.1 s of reset delay
+  at power-up.
+- C2 at module pin 3: 22 µF instead of 10 µF (Samsung CL10A226MQ8NRNC), the value of
+  Espressif's reference circuit.
+- PCBWay counts: 13 unique parts (v1.1: 14), still 25 placements.
+- PCBWay panel note: 7 mm free left of each board instead of 6 mm. The antenna (5.2 mm)
+  and the J1 overhang of the board to its left (0.9 mm) are at the same height, so 6 mm
+  let them touch.
+- `generate.py` writes the order files with LF line endings on every platform; kicad-cli
+  on Windows writes CRLF.
+
+### Firmware
+
+- No functional change (comments only); it runs on v1.0, v1.1 and v1.12.
+
 ## [1.1] - 2026-10-31
 
 <!-- TODO after testing: add a line about the test result. If v1.0 was never built, say

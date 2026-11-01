@@ -5,7 +5,7 @@ rebuilds them (see [hardware/README.md](../hardware/README.md#regenerating)).
 
 | Upload | File |
 | --- | --- |
-| PCB (Gerber) | `bellbridge-v1.1-pcbway.zip` (Gerbers, PTH and NPTH drill files, job file, BOM, CPL, remarks) |
+| PCB (Gerber) | `bellbridge-v1.12-pcbway.zip` (Gerbers, PTH and NPTH drill files, job file, BOM, CPL, remarks) |
 | Assembly BOM | `bom.xlsx` in PCBWay's BOM layout: one line per part number with manufacturer, MPN, LCSC number as "Vendor Part #" and what may be substituted in "Customer Reply" (`bom.csv` is the same table) |
 | Assembly centroid | `cpl.csv` (designator, X, Y, layer, rotation) |
 | Remarks | the text of `PCBWAY-REMARKS.txt` |
@@ -29,8 +29,10 @@ Also in the design: four plated 0.6 mm slots for the USB-C shell lugs, two 0.60 
 unplated locating holes, and four 1.20 mm plated holes for J1. There is no milled slot.
 The module's antenna overhangs the left edge by 5.2 mm on purpose (Espressif's placement
 for a PCB antenna), so the assembled board is 31.4 mm wide. If PCBWay panelizes the boards
-for assembly, the panel must keep at least 6 mm to the left of each board free: no
-neighbouring board and no rail under the antenna. The panel needs routed tabs, not
+for assembly, the panel must keep at least 7 mm to the left of each board free: no
+neighbouring board and no rail under the antenna. The antenna takes 5.2 mm of that, and the
+neighbour's J1 sticks out 0.9 mm past its right edge at the same height, so 6 mm would let
+the two touch. The panel needs routed tabs, not
 V-scores, because USB-C, J1 and the antenna overhang three edges. C1, C2, C3 and C5 sit
 0.5 mm from the bottom edge, where snapping a tab off could crack them, so no tabs on the
 bottom edge left of J1. Good tab positions, measured from the board's left edge: the top
@@ -52,7 +54,7 @@ fiducials on the panel rails. Confirm this when they ask about the panel.
 | --- | --- |
 | Service | Turnkey (PCBWay sources all parts) |
 | Side | top side only (TP1/TP2 on the back are bare pads, nothing to place) |
-| Number of unique parts | **14** |
+| Number of unique parts | **13** |
 | Number of SMD parts | **22** (all SMD parts except U1 and J2) |
 | Number of ICs with more than 16 pins and SMD irregular parts with more than 10 pins | **2**: U1 (ESP32-C6 module, 53 pads) and J2 (USB-C receptacle, 12 SMD pads plus 4 shell lugs) |
 | Number of through-hole parts | **1** (J1) |
@@ -79,7 +81,7 @@ Paste the contents of `hardware/pcbway/PCBWAY-REMARKS.txt`: 598 characters, and 
 takes at most 600 (`generate.py` refuses a longer text). It covers the locating holes, the
 through-hole joints, J1's orientation, the overhangs of J1, J2 and the module's antenna,
 U3's pins 3 and 6 (left without a track on purpose), the separated grounds, the bare test
-pads on the back, the panel (routed tabs, 6 mm free left of each board, no tabs on the
+pads on the back, the panel (routed tabs, 7 mm free left of each board, no tabs on the
 bottom edge left of J1), the parts that must not be substituted, and the centroid
 conventions. Ask in the order chat to see the panel drawing if PCBWay makes one.
 

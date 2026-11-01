@@ -7,9 +7,8 @@ Item #,*Designator,*Qty,Manufacturer,*Mfg Part #,Description / Value,Vendor Part
 6,"OK1, OK2, OK3",3,Lite-On,LTV-357T-C,"Optocoupler SO-4, transistor output, CTR rank C (200-400 %)",C119091,SO-4_4.4x3.6mm_P2.54mm,SMD,No substitute
 7,R1,1,UNI-ROYAL,0603WAF2200T5E,Resistor 220 ohm 1 % 0603,C22962,R_0603,SMD,"Equivalent OK: same value, size and rating"
 8,"R2, R3",2,YAGEO,RC1210FR-071K5L,Resistor 1.5 kohm 1 % 0.5 W 1210,C309587,R_1210,SMD,"Any 1.5 kohm 1210, min. 0.5 W"
-9,"R4, R5, R8, R12",4,UNI-ROYAL,0603WAF1002T5E,Resistor 10 kohm 1 % 0603,C25804,R_0603,SMD,"Equivalent OK: same value, size and rating"
-10,R6,1,UNI-ROYAL,0603WAF1003T5E,Resistor 100 kohm 1 % 0603,C25803,R_0603,SMD,"Equivalent OK: same value, size and rating"
-11,"R7, R10",2,UNI-ROYAL,0603WAF5101T5E,Resistor 5.1 kohm 1 % 0603,C23186,R_0603,SMD,"Equivalent OK: same value, size and rating"
-12,"C1, C2, C3",3,Samsung,CL10A106KP8NNNC,Capacitor 10 uF 10 V X5R 0603,C19702,C_0603,SMD,"Equivalent OK: same value, size, voltage and dielectric"
+9,"R4, R5, R6, R8, R12",5,UNI-ROYAL,0603WAF1002T5E,Resistor 10 kohm 1 % 0603,C25804,R_0603,SMD,"Equivalent OK: same value, size and rating"
+10,"R7, R10",2,UNI-ROYAL,0603WAF5101T5E,Resistor 5.1 kohm 1 % 0603,C23186,R_0603,SMD,"Equivalent OK: same value, size and rating"
+11,"C1, C3, C6",3,Samsung,CL10A106KP8NNNC,Capacitor 10 uF 10 V X5R 0603,C19702,C_0603,SMD,"Equivalent OK: same value, size, voltage and dielectric"
+12,C2,1,Samsung,CL10A226MQ8NRNC,Capacitor 22 uF 6.3 V X5R 0603,C59461,C_0603,SMD,"Equivalent OK: same value, size, voltage and dielectric"
 13,"C4, C5, C7",3,Samsung,CL10B104KB8NNNC,Capacitor 100 nF 50 V X7R 0603,C1591,C_0603,SMD,"Equivalent OK: same value, size, voltage and dielectric"
-14,C6,1,Samsung,CL10A105KB8NNNC,Capacitor 1 uF 50 V X5R 0603,C15849,C_0603,SMD,"Equivalent OK: same value, size, voltage and dielectric"

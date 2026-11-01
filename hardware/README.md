@@ -1,4 +1,4 @@
-# BellBridge hardware (v1.1)
+# BellBridge hardware (v1.12)
 
 The board is not drawn by hand. [`generate.py`](generate.py) places and routes every part,
 checks the result, and writes the KiCad board and the PCBWay order files. To change the
@@ -56,11 +56,12 @@ dissipates about 0.35 W, which the derating curve allows up to about 95 °C ambi
 DOOR and the emitter on `GND_BUS`, so the transistor pulls the opener line to bus ground.
 The LTV-357T is rated V<sub>CEO</sub> 35 V and 50 mA collector current. The suffix -C is
 CTR rank C, 200–400 % at I<sub>F</sub> = 5 mA (Lite-On datasheet, rank table), so the
-output sinks about 19 mA. R6 (100 kΩ to ground) holds GPIO19 low from reset until the
+output sinks about 19 mA. R6 (10 kΩ to ground) holds GPIO19 low from reset until the
 firmware drives it, so the door does not buzz while the module boots. Only while the chip
 itself is held in reset is the pin's weak internal pull-up on (ESP32-C6 IO MUX table,
-GPIO19 = SDIO_CLK); OK1's LED then gets less than 0.1 mA, against 9.5 mA when the firmware
-switches it.
+GPIO19 = SDIO_CLK); against 10 kΩ it lifts the pin to only about 0.6 V, below the LED's
+forward voltage, so OK1 stays off. While the firmware switches the LED on (9.5 mA), R6
+draws another 0.33 mA.
 
 **Straps and test pads.** GPIO8 and GPIO9 are strapping pins. GPIO8 has a 10 kΩ pull-up
 (R12); GPIO9 relies on the module's internal pull-up, as in the MINI-1 datasheet's
@@ -71,8 +72,10 @@ puts the module into download mode over the USB serial/JTAG port, and replugging
 resets it. If a broken firmware stops that from working, bridge the two bare pads on the
 back, TP1 (BOOT, GPIO9) and TP2 (GND), with tweezers while you plug in USB; the module then
 starts in download mode. The test pads sit on the back right of the module, beside its
-GPIO9 pin. EN has 10 kΩ (R8) and 1 µF (C6); pin 8 is on the module's bottom side, so EN
-runs 11 mm on the back to R8 and C6 beside the regulator. GPIO15 stays open.
+GPIO9 pin. EN has 10 kΩ (R8) and 10 µF (C6, the same part as C1 and C3), which holds the
+chip in reset for about 0.1 s after power-up; Espressif gives 10 kΩ + 1 µF as values to
+adjust to the power-up timing. Pin 8 is on the module's bottom side, so EN runs 11 mm on
+the back to R8 and C6 beside the regulator. GPIO15 stays open.
 
 **Firmware.** The firmware uses the three GPIOs directly. The XIAO ESP32-C6 antenna switch
 (GPIO3, GPIO14) does not exist here, so do not use the `seeed_xiao_esp32c6` board profile;
@@ -93,7 +96,7 @@ ST's USBLC6-2 datasheet, and is tied to the VBUS via above it.
 
 The AP2112K-3.3 (600 mA, stable with ceramic capacitors) makes 3.3 V; its EN is tied to
 VBUS. Capacitors: 10 µF + 100 nF at the input (C1, C4; 4.0 mm and 6.3 mm of track from
-VIN), 10 µF at the output (C3, 4.1 mm from VOUT), and 100 nF + 10 µF at module pin 3 (C5,
+VIN), 10 µF at the output (C3, 4.1 mm from VOUT), and 100 nF + 22 µF at module pin 3 (C5,
 C2; 1.4 mm and 2.6 mm from the pin, in a strip along the bottom edge). VBUS runs as 0.5 mm
 tracks, on the back from the receptacle to the regulator column, where two vias bring it
 to the front, and 0.4 mm in the short
@@ -105,9 +108,9 @@ resistors are 0.3 mm.
 
 The module draws up to 382 mA while it transmits (802.11b at 20.5 dBm, Espressif's
 datasheet), and Espressif asks for a supply of at least 0.5 A; the AP2112K delivers
-600 mA. Espressif's reference circuit puts 22 µF + 0.1 µF at the module's 3V3 pin. Here
-10 µF + 100 nF sit at pin 3 and another 10 µF at the regulator output, and the module has
-its own decoupling under the shield. At 5 V in and about 100 mA on average, the regulator
+600 mA. Pin 3 has 22 µF + 100 nF, as in Espressif's reference circuit, another 10 µF sits
+at the regulator output, and the module has its own decoupling under the shield. At 5 V in
+and about 100 mA on average, the regulator
 dissipates about 0.17 W, roughly 30 °C above ambient in SOT-23-5 (184 °C/W). Wi-Fi
 transmits in short bursts, and the AP2112K limits its current and shuts down when
 overheated.
@@ -190,12 +193,11 @@ TP2 are bare copper pads on the back, not parts; they are left out of the BOM an
 | OK1–OK3 | Optocoupler, SO-4, CTR rank C | Lite-On | LTV-357T-C | C119091 |
 | R1 | 220 Ω 0603 | UNI-ROYAL | 0603WAF2200T5E | C22962 |
 | R2, R3 | 1.5 kΩ 0.5 W 1210 | YAGEO | RC1210FR-071K5L | C309587 |
-| R4, R5, R8, R12 | 10 kΩ 0603 | UNI-ROYAL | 0603WAF1002T5E | C25804 |
-| R6 | 100 kΩ 0603 | UNI-ROYAL | 0603WAF1003T5E | C25803 |
+| R4, R5, R6, R8, R12 | 10 kΩ 0603 | UNI-ROYAL | 0603WAF1002T5E | C25804 |
 | R7, R10 | 5.1 kΩ 0603 | UNI-ROYAL | 0603WAF5101T5E | C23186 |
-| C1–C3 | 10 µF 10 V X5R 0603 | Samsung | CL10A106KP8NNNC | C19702 |
+| C1, C3, C6 | 10 µF 10 V X5R 0603 | Samsung | CL10A106KP8NNNC | C19702 |
+| C2 | 22 µF 6.3 V X5R 0603 | Samsung | CL10A226MQ8NRNC | C59461 |
 | C4, C5, C7 | 100 nF 50 V X7R 0603 | Samsung | CL10B104KB8NNNC | C1591 |
-| C6 | 1 µF 50 V X5R 0603 | Samsung | CL10A105KB8NNNC | C15849 |
 
 Every part has its LCSC number in the BOM's "Vendor Part #" column, and its "Customer Reply"
 column tells PCBWay per line what may be substituted: resistors and capacitors by parts of
@@ -216,7 +218,7 @@ most 0.1 N·m. Rated 150 V / 7 A (UL), −40 to +105 °C.
 | `bellbridge.kicad_pcb`, `bellbridge.kicad_pro` | KiCad board (ground pours are unfilled; press **B** in KiCad to fill them) |
 | `bom.csv`, `bom.xlsx` | bill of materials in the columns of PCBWay's BOM quotation: Item #, *Designator, *Qty, Manufacturer, *Mfg Part #, Description / Value, Vendor Part # (LCSC), *Package/Footprint, Mounting Type, Customer Reply (what may be substituted); the same table as text and as a spreadsheet |
 | `cpl.csv` | placement: origin at the board's lower-left corner, mm, Y up, KiCad rotation; J1 at its body centre |
-| `pcbway/` | Gerbers, drill files, job file, BOM, CPL, `PCBWAY-REMARKS.txt` and the order zip `bellbridge-v1.1-pcbway.zip` |
+| `pcbway/` | Gerbers, drill files, job file, BOM, CPL, `PCBWAY-REMARKS.txt` and the order zip `bellbridge-v1.12-pcbway.zip` |
 | `drc-report.json` | KiCad DRC report of the last run |
 | `plots/` | quick previews from `generate.py` (net colours, both sides) |
 
@@ -241,12 +243,22 @@ DRC with refilled pours. `pcbway/` and the order zip are written only when the D
 ```
 python-drc 0
 kicad-drc violations 0 unconnected 0 {}
-zip .../pcbway/bellbridge-v1.1-pcbway.zip
+zip .../pcbway/bellbridge-v1.12-pcbway.zip
 ```
 
-## Design verification (v1.1)
+## Design verification (v1.12)
 
-Done before ordering:
+v1.12 changes three part values, the PCBWay panel note and the version on the back
+silkscreen. Regenerated, its copper, solder mask, paste, outline and drill files and the CPL
+are the same as v1.1's (only the revision and date attributes in the file headers differ),
+so the v1.1 checks below still hold.
+
+- `generate.py` checks for v1.12: 0 errors. KiCad 10.0.6 DRC with all severities and
+  refilled pours: 0 violations, 0 unconnected items.
+- The new 22 µF capacitor (Samsung CL10A226MQ8NRNC, LCSC C59461) uses the same 0603 land
+  as the other capacitors; LCSC lists it as 22 µF ±20 %, 6.3 V, X5R.
+
+Done for v1.1 before ordering:
 
 - `generate.py` checks: 0 errors. KiCad 10.0.6 DRC with all severities and refilled
   pours: 0 violations, 0 unconnected items.
@@ -289,6 +301,6 @@ Differences:
 - 1.5 kΩ input resistors instead of 680 Ω: 2.4 mA instead of about 5 mA, and the inputs
   survive a wire on +24 V.
 - External 10 kΩ pull-ups on GPIO18 and GPIO20; `pullup: true` in the firmware does no harm.
-- 100 kΩ from GPIO19 to ground, so the opener stays off during boot.
+- 10 kΩ from GPIO19 to ground, so the opener stays off during boot.
 - LTV-357T-C (CTR rank C, SO-4) instead of a PC817.
 - ESP32-C6-MINI-1-N4 module instead of a XIAO ESP32-C6, plus USB ESD protection.
