@@ -1,0 +1,131 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="860" viewBox="0 0 1400 860">
+<defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#333"/></marker></defs>
+<rect x="0" y="0" width="1400" height="860" rx="0" fill="#ffffff" stroke="#ffffff" stroke-width="0"/>
+<text x="20" y="40" font-size="22" font-weight="bold" fill="#222" text-anchor="start" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >TwinBus Analyzer · concept sketch</text>
+<text x="20" y="64" font-size="14" font-weight="normal" fill="#555" text-anchor="start" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >Records what the Ritto TwinBus carries, without loading or driving it. Not yet a PCB.</text>
+<rect x="320" y="90" width="380" height="680" rx="10" fill="#fff3e0" stroke="#e8a33d" stroke-width="1.2"/>
+<rect x="700" y="90" width="690" height="680" rx="10" fill="#e9f2fc" stroke="#6a9fd8" stroke-width="1.2"/>
+<text x="335" y="116" font-size="15" font-weight="bold" fill="#9a5b00" text-anchor="start" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >BUS SIDE</text>
+<text x="335" y="134" font-size="12" font-weight="normal" fill="#9a5b00" text-anchor="start" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >floats with the bus · &lt; 30 µA from it</text>
+<text x="790" y="116" font-size="15" font-weight="bold" fill="#1f5a99" text-anchor="start" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >USB SIDE</text>
+<text x="790" y="134" font-size="12" font-weight="normal" fill="#1f5a99" text-anchor="start" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >ESP32-C6, USB-C, logic-analyzer and scope header</text>
+<line x1="700" y1="92" x2="700" y2="768" stroke="#c0392b" stroke-width="2.2" stroke-dasharray="9,6"/>
+<text x="700" y="784" font-size="12" font-weight="bold" fill="#c0392b" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >ISOLATION BARRIER</text>
+<rect x="20" y="150" width="180" height="80" rx="6" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<text x="110.0" y="177.55" font-size="13" font-weight="bold" fill="#222" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >TwinBus (building)</text>
+<text x="110.0" y="194.55" font-size="12" font-weight="normal" fill="#333" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >a, b · 15–30 V DC</text>
+<text x="110.0" y="211.55" font-size="12" font-weight="normal" fill="#333" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >30 V idle, 24 V in a call</text>
+<rect x="20" y="320" width="180" height="310" rx="6" fill="#fff" stroke="#555" stroke-width="1.4" stroke-dasharray="6,4"/>
+<text x="110" y="349" font-size="12" font-weight="normal" fill="#333" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >a, b: bus terminals</text>
+<text x="110" y="455" font-size="14" font-weight="bold" fill="#222" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >Ritto 7630</text>
+<text x="110" y="474" font-size="12" font-weight="normal" fill="#333" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >indoor station</text>
+<text x="110" y="584" font-size="12" font-weight="normal" fill="#333" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >ED, ED: flat-door</text>
+<text x="110" y="600" font-size="12" font-weight="normal" fill="#333" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >button terminals</text>
+<rect x="225" y="150" width="72" height="480" rx="6" fill="#f7f7f7" stroke="#555" stroke-width="1.4"/>
+<text x="261" y="145" font-size="13" font-weight="bold" fill="#222" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >J1</text>
+<text x="261" y="179" font-size="11" font-weight="normal" fill="#222" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >BUS a</text>
+<text x="261" y="209" font-size="11" font-weight="normal" fill="#222" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >BUS b</text>
+<text x="261" y="334" font-size="11" font-weight="normal" fill="#222" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >STN a</text>
+<text x="261" y="364" font-size="11" font-weight="normal" fill="#222" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >STN b</text>
+<text x="261" y="579" font-size="11" font-weight="normal" fill="#222" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >ED1</text>
+<text x="261" y="609" font-size="11" font-weight="normal" fill="#222" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >ED2</text>
+<polyline points="200,175 225,175" fill="none" stroke="#333" stroke-width="1.6"/>
+<polyline points="200,205 225,205" fill="none" stroke="#333" stroke-width="1.6"/>
+<polyline points="200,330 225,330" fill="none" stroke="#333" stroke-width="1.6"/>
+<polyline points="200,360 225,360" fill="none" stroke="#333" stroke-width="1.6"/>
+<polyline points="200,575 225,575" fill="none" stroke="#333" stroke-width="1.6"/>
+<polyline points="200,605 225,605" fill="none" stroke="#333" stroke-width="1.6"/>
+<polyline points="297,175 310,175 310,305 340,305" fill="none" stroke="#333" stroke-width="1.6" marker-end="url(#arr)"/>
+<polyline points="297,330 310,330 310,305" fill="none" stroke="#333" stroke-width="1.6"/>
+<circle cx="310" cy="305" r="3.2" fill="#333"/>
+<text x="314" y="297" font-size="12" font-weight="bold" fill="#222" text-anchor="start" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >a</text>
+<polyline points="297,205 340,205" fill="none" stroke="#333" stroke-width="1.6" marker-end="url(#arr)"/>
+<text x="313" y="200" font-size="12" font-weight="bold" fill="#222" text-anchor="start" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >b</text>
+<polyline points="297,360 328,360 328,225 340,225" fill="none" stroke="#333" stroke-width="1.6" marker-end="url(#arr)"/>
+<polyline points="297,575 340,575" fill="none" stroke="#333" stroke-width="1.6" marker-end="url(#arr)"/>
+<polyline points="297,605 340,605" fill="none" stroke="#333" stroke-width="1.6" marker-end="url(#arr)"/>
+<rect x="340" y="150" width="260" height="90" rx="6" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<text x="470.0" y="174.05" font-size="13" font-weight="bold" fill="#222" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >Station-current shunt</text>
+<text x="470.0" y="191.05" font-size="12" font-weight="normal" fill="#333" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >1 Ω, 1 W in the b line</text>
+<text x="470.0" y="208.05" font-size="12" font-weight="normal" fill="#333" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >+ 10 Ω / 10 nF / 10 Ω filter</text>
+<text x="470.0" y="225.05" font-size="12" font-weight="normal" fill="#333" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >SS14 clamp · pass-through only</text>
+<rect x="340" y="260" width="260" height="90" rx="6" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<text x="470.0" y="284.05" font-size="13" font-weight="bold" fill="#222" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >Bus-voltage divider ÷21</text>
+<text x="470.0" y="301.05" font-size="12" font-weight="normal" fill="#333" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >2 × 499 kΩ + 49.9 kΩ, 100 pF</text>
+<text x="470.0" y="318.05" font-size="12" font-weight="normal" fill="#333" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >0–40 V → 0–1.9 V</text>
+<text x="470.0" y="335.05" font-size="12" font-weight="normal" fill="#333" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >BAV99 clamp to the rails</text>
+<rect x="340" y="545" width="260" height="90" rx="6" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<text x="470.0" y="569.05" font-size="13" font-weight="bold" fill="#222" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >Flat-door button sense (ED)</text>
+<text x="470.0" y="586.05" font-size="12" font-weight="normal" fill="#333" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >difference amp, 1 MΩ inputs</text>
+<text x="470.0" y="603.05" font-size="12" font-weight="normal" fill="#333" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >+ comparator (TLV9062)</text>
+<text x="470.0" y="620.05" font-size="12" font-weight="normal" fill="#333" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >loads the button by a few µA</text>
+<rect x="340" y="665" width="260" height="60" rx="6" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<text x="470.0" y="691.05" font-size="13" font-weight="bold" fill="#222" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >LDO 3.3 V (AP2112K)</text>
+<text x="470.0" y="708.05" font-size="12" font-weight="normal" fill="#333" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >3V3_ISO for this side, ~15 mA</text>
+<rect x="640" y="165" width="120" height="60" rx="6" fill="#fff" stroke="#c0392b" stroke-width="2.0"/>
+<text x="700.0" y="183.2" font-size="12" font-weight="bold" fill="#222" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >AMC1300B</text>
+<text x="700.0" y="199.2" font-size="11" font-weight="normal" fill="#333" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >±250 mV in</text>
+<text x="700.0" y="215.2" font-size="11" font-weight="normal" fill="#333" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >= ±250 mA</text>
+<rect x="640" y="275" width="120" height="60" rx="6" fill="#fff" stroke="#c0392b" stroke-width="2.0"/>
+<text x="700.0" y="301.2" font-size="12" font-weight="bold" fill="#222" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >AMC1311B</text>
+<text x="700.0" y="317.2" font-size="11" font-weight="normal" fill="#333" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >0–2 V, gain 1</text>
+<rect x="640" y="560" width="120" height="60" rx="6" fill="#fff" stroke="#c0392b" stroke-width="2.0"/>
+<text x="700.0" y="586.2" font-size="12" font-weight="bold" fill="#222" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >ISO7720</text>
+<text x="700.0" y="602.2" font-size="11" font-weight="normal" fill="#333" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >digital isolator</text>
+<rect x="640" y="665" width="120" height="60" rx="6" fill="#fff" stroke="#c0392b" stroke-width="2.0"/>
+<text x="700.0" y="691.2" font-size="12" font-weight="bold" fill="#222" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >B0505S-1WR3</text>
+<text x="700.0" y="707.2" font-size="11" font-weight="normal" fill="#333" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >isolated DC-DC</text>
+<rect x="790" y="165" width="300" height="60" rx="6" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<text x="940.0" y="191.05" font-size="13" font-weight="bold" fill="#222" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >Difference amp ×0.6 (TLV9062)</text>
+<text x="940.0" y="208.05" font-size="12" font-weight="normal" fill="#333" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >around 1.65 V · 4.92 mV per mA</text>
+<rect x="790" y="275" width="300" height="60" rx="6" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<text x="940.0" y="301.05" font-size="13" font-weight="bold" fill="#222" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >Difference amp ×1 (TLV9062)</text>
+<text x="940.0" y="318.05" font-size="12" font-weight="normal" fill="#333" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >bus voltage ÷ 21 · 0–1.9 V</text>
+<rect x="790" y="370" width="300" height="60" rx="6" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<text x="940.0" y="396.05" font-size="13" font-weight="bold" fill="#222" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >AC amplifier ×11</text>
+<text x="940.0" y="413.05" font-size="12" font-weight="normal" fill="#333" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >from 1.6 Hz · 0.524 V per volt on the bus</text>
+<rect x="790" y="455" width="300" height="90" rx="6" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<text x="940.0" y="479.05" font-size="13" font-weight="bold" fill="#222" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >Window comparator (TLV3202)</text>
+<text x="940.0" y="496.05" font-size="12" font-weight="normal" fill="#333" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >CMP_HI above +threshold</text>
+<text x="940.0" y="513.05" font-size="12" font-weight="normal" fill="#333" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >CMP_LO below −threshold</text>
+<text x="940.0" y="530.05" font-size="12" font-weight="normal" fill="#333" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >thresholds: PWM from GPIO22/23</text>
+<rect x="790" y="665" width="300" height="60" rx="6" fill="#fff" stroke="#555" stroke-width="1.4"/>
+<text x="940.0" y="691.05" font-size="13" font-weight="bold" fill="#222" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >USB-C → USBLC6-2P6 → AP2112K</text>
+<text x="940.0" y="708.05" font-size="12" font-weight="normal" fill="#333" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >5 V to the DC-DC, 3.3 V to this side</text>
+<rect x="1150" y="150" width="220" height="470" rx="6" fill="#ffffff" stroke="#1f5a99" stroke-width="2.0"/>
+<text x="1260" y="176" font-size="14" font-weight="bold" fill="#222" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >ESP32-C6-MINI-1-N4</text>
+<text x="1160" y="199" font-size="12" font-weight="normal" fill="#222" text-anchor="start" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >GPIO3 · ADC ← I</text>
+<text x="1160" y="309" font-size="12" font-weight="normal" fill="#222" text-anchor="start" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >GPIO2 · ADC ← V</text>
+<text x="1160" y="484" font-size="12" font-weight="normal" fill="#222" text-anchor="start" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >GPIO18 · RMT ← CMP_HI</text>
+<text x="1160" y="509" font-size="12" font-weight="normal" fill="#222" text-anchor="start" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >GPIO20 · RMT ← CMP_LO</text>
+<text x="1160" y="534" font-size="12" font-weight="normal" fill="#222" text-anchor="start" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >GPIO22/23 · PWM → thresholds</text>
+<text x="1160" y="594" font-size="12" font-weight="normal" fill="#222" text-anchor="start" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >GPIO19 ← ED</text>
+<text x="1160" y="614" font-size="12" font-weight="normal" fill="#222" text-anchor="start" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >3.3 V</text>
+<text x="1260" y="385" font-size="12" font-weight="normal" fill="#333" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >Wi-Fi: ESPHome logs and</text>
+<text x="1260" y="403" font-size="12" font-weight="normal" fill="#333" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >Home Assistant entities</text>
+<text x="1260" y="421" font-size="12" font-weight="normal" fill="#333" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >USB: serial log / stream</text>
+<rect x="1150" y="640" width="220" height="110" rx="6" fill="#fff" stroke="#1f5a99" stroke-width="1.6"/>
+<text x="1260.0" y="675.2" font-size="12" font-weight="bold" fill="#222" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >J3 · logic analyzer / scope</text>
+<text x="1260.0" y="691.2" font-size="11" font-weight="normal" fill="#333" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >D0 CMP_HI · D1 CMP_LO</text>
+<text x="1260.0" y="707.2" font-size="11" font-weight="normal" fill="#333" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >D2 ED · A0 V÷21 · A1 AC</text>
+<text x="1260.0" y="723.2" font-size="11" font-weight="normal" fill="#333" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >A2 I · GND</text>
+<polyline points="600,195 640,195" fill="none" stroke="#333" stroke-width="1.6" marker-end="url(#arr)"/>
+<polyline points="760,195 790,195" fill="none" stroke="#333" stroke-width="1.6" marker-end="url(#arr)"/>
+<polyline points="1090,195 1150,195" fill="none" stroke="#333" stroke-width="1.6" marker-end="url(#arr)"/>
+<polyline points="600,305 640,305" fill="none" stroke="#333" stroke-width="1.6" marker-end="url(#arr)"/>
+<polyline points="760,305 790,305" fill="none" stroke="#333" stroke-width="1.6" marker-end="url(#arr)"/>
+<polyline points="1090,305 1150,305" fill="none" stroke="#333" stroke-width="1.6" marker-end="url(#arr)"/>
+<polyline points="940,335 940,370" fill="none" stroke="#333" stroke-width="1.6" marker-end="url(#arr)"/>
+<polyline points="940,430 940,455" fill="none" stroke="#333" stroke-width="1.6" marker-end="url(#arr)"/>
+<polyline points="1090,480 1150,480" fill="none" stroke="#333" stroke-width="1.6" marker-end="url(#arr)"/>
+<polyline points="1090,505 1150,505" fill="none" stroke="#333" stroke-width="1.6" marker-end="url(#arr)"/>
+<polyline points="1150,530 1090,530" fill="none" stroke="#333" stroke-width="1.6" stroke-dasharray="5,4" marker-end="url(#arr)"/>
+<polyline points="600,590 640,590" fill="none" stroke="#333" stroke-width="1.6" marker-end="url(#arr)"/>
+<polyline points="760,590 1150,590" fill="none" stroke="#333" stroke-width="1.6" marker-end="url(#arr)"/>
+<polyline points="790,695 760,695" fill="none" stroke="#333" stroke-width="1.6" marker-end="url(#arr)"/>
+<polyline points="640,695 600,695" fill="none" stroke="#333" stroke-width="1.6" marker-end="url(#arr)"/>
+<polyline points="1090,695 1120,695 1120,610 1150,610" fill="none" stroke="#333" stroke-width="1.6" marker-end="url(#arr)"/>
+<text x="20" y="808" font-size="13" font-weight="normal" fill="#444" text-anchor="start" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >Receive-only: nothing on the board can drive the bus. In parallel mode it draws under 30 µA from the bus.</text>
+<text x="20" y="828" font-size="13" font-weight="normal" fill="#444" text-anchor="start" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >Parallel mode: wire only BUS a/b, next to the 7630 (bus voltage, edges, ED).   Pass-through mode: building → BUS a/b,</text>
+<text x="20" y="848" font-size="13" font-weight="normal" fill="#444" text-anchor="start" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" >7630 → STN a/b; adds the station-current channel (shows how the 7630 itself signals, e.g. the door key).</text>
+</svg>
