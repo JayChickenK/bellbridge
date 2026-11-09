@@ -103,10 +103,15 @@ Details, the parts list and the design checks are in [hardware/README.md](hardwa
 v1.12 is v1.1 with three part values changed (R6 10 kΩ, C6 10 µF, C2 22 µF) and a wider
 panel note for PCBWay; the copper is the same. v1.13 adds tracks for the bus ground, so it no
 longer depends on the ground pour alone. All versions have the same circuit,
-terminal order and GPIOs, and none has been built yet. The firmware in this branch runs on
+terminal order and GPIOs. v1.0 has been assembled (photos below); the later versions have
+not been built yet. The firmware in this branch runs on
 all of them; the copy in the v1.0 files has a bell-logic bug (see the
 [changelog](CHANGELOG.md)). Each version's order files are attached to its
 [release](https://github.com/JayChickenK/bellbridge/releases).
+
+| BellBridge v1.0, assembled | BellBridge v1.0, assembled (angled view) |
+| --- | --- |
+| ![BellBridge v1.0 assembled, top view](docs/images/v1.0-assembled-top.jpg) | ![BellBridge v1.0 assembled, angled view](docs/images/v1.0-assembled-angle.jpg) |
 
 ## Wiring
 
