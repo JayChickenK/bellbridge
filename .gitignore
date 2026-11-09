@@ -8,6 +8,7 @@ secrets.yaml
 fp-info-cache
 *.lck
 _autosave-*
+.history/
 
 # generate.py intermediates (the order files are in hardware/pcbway/)
 hardware/gerber/
