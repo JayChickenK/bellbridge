@@ -9,19 +9,20 @@ locally through [ESPHome](https://esphome.io/) with no cloud involved. It is the
 26.2 × 27.5 mm board that PCBWay assembles completely, ESP32-C6 module included.
 
 <!-- TODO after testing: replace the status line, e.g.
-> **Status:** v1.12 built and tested on a Ritto 7630 (YYYY-MM-DD), see the [test report](docs/testing.md).
+> **Status:** v1.13 built and tested on a Ritto 7630 (YYYY-MM-DD), see the [test report](docs/testing.md).
 -->
 > [!WARNING]
-> **Status:** hardware v1.12 is designed and checked, but it has not yet been built or
+> **Status:** hardware v1.13 is designed and checked, but it has not yet been built or
 > tested on an intercom. It is v1.1, the smaller follow-up of v1.0, with three part values
-> changed; see the [changelog](CHANGELOG.md).
+> changed (v1.12) and the bus ground routed with tracks (v1.13); see the
+> [changelog](CHANGELOG.md).
 
 <!-- TODO: add photos, e.g.
-![BellBridge v1.12, assembled](docs/images/assembled-top.jpg)
+![BellBridge v1.13, assembled](docs/images/assembled-top.jpg)
 ![BellBridge installed behind a Ritto 7630](docs/images/installed.jpg)
 -->
 
-![BellBridge v1.12 with all parts (render)](docs/images/render-assembled.png)
+![BellBridge v1.13 with all parts (render)](docs/images/render-assembled.png)
 
 The assembled board as a KiCad render: USB-C at the top edge, the module on the left
 with its antenna sticking out 5.2 mm past the edge, the screw terminal on the right edge.
@@ -88,7 +89,7 @@ Details, the parts list and the design checks are in [hardware/README.md](hardwa
 
 ## Versions
 
-| | v1.12 (current) and [v1.1](https://github.com/JayChickenK/bellbridge/tree/v1.1) | [v1.0](https://github.com/JayChickenK/bellbridge/tree/v1.0) |
+| | v1.13 (current), [v1.12](https://github.com/JayChickenK/bellbridge/tree/v1.12) and [v1.1](https://github.com/JayChickenK/bellbridge/tree/v1.1) | [v1.0](https://github.com/JayChickenK/bellbridge/tree/v1.0) |
 | --- | --- | --- |
 | Board | 26.2 × 27.5 mm; 31.4 mm wide with the antenna | 36.4 × 31.5 mm |
 | Antenna | past the left edge, as Espressif recommends | on the board, at its edge |
@@ -100,7 +101,8 @@ Details, the parts list and the design checks are in [hardware/README.md](hardwa
 | Download mode, reset | test pads on the back, replug USB | BOOT and RESET buttons |
 
 v1.12 is v1.1 with three part values changed (R6 10 kΩ, C6 10 µF, C2 22 µF) and a wider
-panel note for PCBWay; the copper is the same. All three versions have the same circuit,
+panel note for PCBWay; the copper is the same. v1.13 adds tracks for the bus ground, so it no
+longer depends on the ground pour alone. All versions have the same circuit,
 terminal order and GPIOs, and none has been built yet. The firmware in this branch runs on
 all of them; the copy in the v1.0 files has a bell-logic bug (see the
 [changelog](CHANGELOG.md)). Each version's order files are attached to its

@@ -5,13 +5,13 @@
       "Application": "Pcbnew",
       "Version": "10.0.6"
     },
-    "CreationDate": "2026-11-01T10:57:36+01:00"
+    "CreationDate": "2026-11-09T16:06:37+01:00"
   },
   "GeneralSpecs": {
     "ProjectId": {
       "Name": "bellbridge",
       "GUID": "62656c6c-6272-4696-9467-652e6b696361",
-      "Revision": "1.12"
+      "Revision": "1.13"
     },
     "Size": {
       "X": 26.25,

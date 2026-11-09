@@ -5169,11 +5169,6 @@
 		)
 		(uuid "cf77d409-26da-473c-922d-a310583de98e")
 	)
-  (text "BellBridge v1.12 - Ritto 7630 TwinBus interface, ESP32-C6-MINI-1"
-    (at 30.48 30.48 0)
-    (effects (font (size 3 3) (thickness 0.6) (bold yes)) (justify left bottom))
-    (uuid "ab246caa-3cc3-4f82-aa01-7e2b3c47f134")
-  )
   (text "Drawn from the board that hardware/generate.py writes: references, values, footprints, pads and net names match bellbridge.kicad_pcb.\ngenerate.py is the source of truth. Change the board there first, then update this sheet."
     (at 30.48 35.56 0)
     (effects (font (size 1.5 1.5)) (justify left top))
@@ -5223,6 +5218,11 @@
     (at 340.36 144.78 0)
     (effects (font (size 1.27 1.27)) (justify left top))
     (uuid "ebd2b108-cc45-41ef-81d5-eb4333c16f50")
+  )
+  (text "BellBridge v1.13 - Ritto 7630 TwinBus interface, ESP32-C6-MINI-1"
+    (at 30.48 30.48 0)
+    (effects (font (size 3 3) (thickness 0.6) (bold yes)) (justify left bottom))
+    (uuid "96f28923-e44a-48e0-a7cf-fc58c20129c7")
   )
 	(symbol
 		(lib_id "RF_Module:ESP32-C6-MINI-1")

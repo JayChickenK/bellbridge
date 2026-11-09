@@ -1,4 +1,4 @@
-# BellBridge v1.12: generator for the PCBWay-assembled Ritto 7630 TwinBus / ESP32-C6 board.
+# BellBridge v1.13: generator for the PCBWay-assembled Ritto 7630 TwinBus / ESP32-C6 board.
 # Writes the KiCad board, BOM and CPL and, when KiCad's DRC is clean, the PCBWay order zip.
 # Millimetres, KiCad 20240108. KiCad reads this file with the origin at the TOP left and Y
 # pointing DOWN: y = 0 is the top edge of the top view, y = BOARD_H the bottom edge. Footprints
@@ -26,6 +26,8 @@
 # v1.12: the copper of v1.1. R6 10k (the pull-ups' part) instead of 100k, C6 10 uF instead of
 # 1 uF, C2 22 uF at module pin 3 instead of 10 uF; panel note 7 mm free left of each board
 # instead of 6 mm. The order files are written with LF line endings on every platform.
+# v1.13: GND_BUS routed with tracks between OK1-OK3 and J1 instead of relying on the pour
+# (bus-ground pad vias placed after the search); parts and all other copper as in v1.12.
 
 from __future__ import annotations
 
@@ -42,7 +44,7 @@ import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-NAME, VERSION = "BellBridge", "1.12"
+NAME, VERSION = "BellBridge", "1.13"
 SLUG = NAME.lower()
 BOARD_W = 31.4
 BOARD_H = 27.5
@@ -1202,10 +1204,6 @@ def route():
         p = pads_of(ref, pin)[0]
         if not try_gnd_via_beside("GND_MCU", p):
             try_gnd_via("GND_MCU", p.x, p.y)
-    for ref, pin in (("OK1", "3"), ("OK2", "2"), ("OK3", "2")):
-        p = pads_of(ref, pin)[0]
-        if not try_gnd_via_beside("GND_BUS", p):
-            try_gnd_via("GND_BUS", p.x, p.y)
     # Espressif's module placement guide asks for ground copper and dense ground vias on the
     # base board near the antenna: a row under the module every 1.6 mm, between its ground pad
     # and the pin row at the antenna end.
@@ -1264,6 +1262,12 @@ def route():
             else:
                 failed.append(f"{net} {p.ref}.{p.pin}")
 
+    # Bus-ground vias only after the search: placed first, each one counts its pad as joined,
+    # and the four GND_BUS pads would then rely on the pour alone instead of tracks.
+    for ref, pin in (("OK1", "3"), ("OK2", "2"), ("OK3", "2")):
+        p = pads_of(ref, pin)[0]
+        if not try_gnd_via_beside("GND_BUS", p):
+            try_gnd_via("GND_BUS", p.x, p.y)
     labels = label_boxes()
     for name, layer, poly in zones():
         if layer != "F.Cu":

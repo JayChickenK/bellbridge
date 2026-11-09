@@ -5,7 +5,7 @@ rebuilds them (see [hardware/README.md](../hardware/README.md#regenerating)).
 
 | Upload | File |
 | --- | --- |
-| PCB (Gerber) | `bellbridge-v1.12-pcbway.zip` (Gerbers, PTH and NPTH drill files, job file, BOM, CPL, remarks) |
+| PCB (Gerber) | `bellbridge-v1.13-pcbway.zip` (Gerbers, PTH and NPTH drill files, job file, BOM, CPL, remarks) |
 | Assembly BOM | `bom.xlsx` in PCBWay's BOM layout: one line per part number with manufacturer, MPN, LCSC number as "Vendor Part #" and what may be substituted in "Customer Reply" (`bom.csv` is the same table) |
 | Assembly centroid | `cpl.csv` (designator, X, Y, layer, rotation) |
 | Remarks | the text of `PCBWAY-REMARKS.txt` |

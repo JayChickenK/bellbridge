@@ -1,12 +1,24 @@
 # Changelog
 
-## [Unreleased]
+## [1.13] - 2026-11-09
 
-- KiCad schematic `hardware/bellbridge.kicad_sch`, drawn from the v1.12 board with the same
+<!-- TODO after testing: add a line about the test result. -->
+
+Released before the first board was built and tested. Same parts, values and placement as
+v1.12; the bus ground gets its own tracks. The back silkscreen reads "BellBridge v1.13".
+
+### Changed from v1.12
+
+- KiCad schematic `hardware/bellbridge.kicad_sch`, drawn from the board with the same
   references, values, footprints and net names. KiCad's ERC and its schematic-to-board check
   can now run; `generate.py` does not update the schematic.
 - `generate.py` gives the project's Default net class a wire width, so the schematic's wires
   appear in KiCad's PDF and SVG plots.
+- Bus ground (`GND_BUS`) is routed with tracks between OK1, OK2, OK3 and J1 (23.8 mm instead
+  of 17.7 mm, 11 vias instead of 8), so these pads no longer depend on the ground pour alone.
+  `generate.py` now places the bus-ground pad vias after the routing search. No other net
+  changed. The EN capacitor stays beside the regulator: in the strip at pin 8 its pad would
+  be boxed in by the 3V3 track to the module, which would then need two vias.
 
 ## [1.12] - 2026-11-01
 

@@ -1,4 +1,4 @@
-# BellBridge hardware (v1.12)
+# BellBridge hardware (v1.13)
 
 The board is not drawn by hand. [`generate.py`](generate.py) places and routes every part,
 checks the result, and writes the KiCad board and the PCBWay order files. To change the
@@ -219,7 +219,7 @@ most 0.1 N·m. Rated 150 V / 7 A (UL), −40 to +105 °C.
 | `bellbridge.kicad_sch` | schematic of the board with the same references, values, footprints and net names, so KiCad's ERC and its schematic-to-board check can run; `generate.py` does not write it, so update it by hand after a board change |
 | `bom.csv`, `bom.xlsx` | bill of materials in the columns of PCBWay's BOM quotation: Item #, *Designator, *Qty, Manufacturer, *Mfg Part #, Description / Value, Vendor Part # (LCSC), *Package/Footprint, Mounting Type, Customer Reply (what may be substituted); the same table as text and as a spreadsheet |
 | `cpl.csv` | placement: origin at the board's lower-left corner, mm, Y up, KiCad rotation; J1 at its body centre |
-| `pcbway/` | Gerbers, drill files, job file, BOM, CPL, `PCBWAY-REMARKS.txt` and the order zip `bellbridge-v1.12-pcbway.zip` |
+| `pcbway/` | Gerbers, drill files, job file, BOM, CPL, `PCBWAY-REMARKS.txt` and the order zip `bellbridge-v1.13-pcbway.zip` |
 | `drc-report.json` | KiCad DRC report of the last run |
 | `plots/` | quick previews from `generate.py` (net colours, both sides) |
 
@@ -244,10 +244,17 @@ DRC with refilled pours. `pcbway/` and the order zip are written only when the D
 ```
 python-drc 0
 kicad-drc violations 0 unconnected 0 {}
-zip .../pcbway/bellbridge-v1.12-pcbway.zip
+zip .../pcbway/bellbridge-v1.13-pcbway.zip
 ```
 
-## Design verification (v1.12)
+## Design verification (v1.13)
+
+v1.13 routes the bus ground (`GND_BUS`) with tracks between OK1, OK2, OK3 and J1: with the bus
+ground pour removed as a test, every bus-ground pad stays connected (v1.12: 6 connections
+missing). All other nets and every part are unchanged from v1.12.
+
+- `generate.py` checks for v1.13: 0 errors. KiCad 10.0.6 DRC with all severities and
+  refilled pours: 0 violations, 0 unconnected items.
 
 v1.12 changes three part values, the PCBWay panel note and the version on the back
 silkscreen. Regenerated, its copper, solder mask, paste, outline and drill files and the CPL

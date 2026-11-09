@@ -1,4 +1,4 @@
-# BellBridge (v1.0, v1.1 and v1.12) - ESPHome firmware for the Ritto 7630 TwinBus intercom board.
+# BellBridge (v1.0, v1.1, v1.12 and v1.13) - ESPHome firmware for the Ritto 7630 TwinBus intercom board.
 #
 # Based on esphome/ritto-intercom.yaml from https://github.com/duramson/ritto-esp
 # (MIT License, Copyright (c) 2026 Cedrik Theesen). Ids and entity names are unchanged, so
