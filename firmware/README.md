@@ -20,10 +20,10 @@ The node name (`ritto-intercom`) and the entity names of ritto-esp are unchanged
 Home Assistant automations written for ritto-esp keep working; the new entities come on
 top.
 
-Validated with ESPHome 2026.8.2 and 2026.11.0 (`esphome config`). With OTA encryption
-instead of the password, it compiled without warnings with ESPHome 2026.9.1 (ESP-IDF
-5.5.5): the image took 862 kB, 47 % of the 1.75 MB app partition, so OTA updates have
-room; RAM use was 32 %.
+Validated with ESPHome 2026.8.2 and 2026.11.0 (`esphome config`). Compiled with ESPHome
+2026.11.0 (ESP-IDF 5.5.6): the image takes 866 kB, 47 % of the 1.75 MB app partition, so
+OTA updates have room; RAM use is 32 %. The only warning is ESPHome's note on the OTA
+password (see [Security](#security)).
 <!-- TODO after testing: "Built and flashed with ESPHome <version> on BellBridge v1.13." -->
 
 ## Entities in Home Assistant

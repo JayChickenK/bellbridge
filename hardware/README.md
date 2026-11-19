@@ -294,8 +294,9 @@ Done for v1.1 before ordering:
 - Pin functions of U1, U2, U3 and OK1–OK3 compared with KiCad's symbols. KiCad's
   LTV-357T symbol has unnamed pins; the board follows Lite-On's 1 anode, 2 cathode,
   3 emitter, 4 collector.
-- Firmware: the GPIOs are the same as on v1.0. Compiled without warnings with ESPHome
-  2026.9.1 for the ESP32-C6; not yet flashed (see [../firmware/README.md](../firmware/README.md)).
+- Firmware: the GPIOs are the same as on v1.0. Compiled with ESPHome 2026.11.0 for the
+  ESP32-C6, with only ESPHome's note on the OTA password as a warning; not yet flashed
+  (see [../firmware/README.md](../firmware/README.md)).
 
 Still open: the built board. See [../docs/testing.md](../docs/testing.md).
 
