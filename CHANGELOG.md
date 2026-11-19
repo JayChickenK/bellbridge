@@ -1,5 +1,14 @@
 # Changelog
 
+## [Unreleased]
+
+### Firmware
+
+- OTA updates need a password again (`ota_password` in `secrets.yaml`) instead of
+  `encryption: {}` under `ota:`. ESPHome 2026.8 and older, including older ESPHome Builder
+  add-ons, reject that option. The Home Assistant API stays encrypted with
+  `api_encryption_key`. Add `ota_password` to an existing `secrets.yaml`.
+
 ## [1.13] - 2026-11-09
 
 <!-- TODO after testing: add a line about the test result. -->

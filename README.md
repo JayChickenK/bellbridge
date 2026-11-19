@@ -49,8 +49,9 @@ These two renders show the bare board, pads and silkscreen without the parts.
   ground are kept apart by a 1.6 mm copper-free strip on both layers.
 - **Powered from USB-C (5 V), not from the bus.** USB ESD protection right in the D+/D−
   path, 3.3 V LDO.
-- **ESP32-C6-MINI-1-N4:** Wi-Fi 6 with a PCB antenna, an encrypted Home Assistant API and
-  OTA updates, and diagnostics (signal, uptime, chip temperature, IP address).
+- **ESP32-C6-MINI-1-N4:** Wi-Fi 6 with a PCB antenna, an encrypted Home Assistant API,
+  password-protected OTA updates, and diagnostics (signal, uptime, chip temperature, IP
+  address).
 - **Fully assembled by PCBWay.** The screw terminal is the only through-hole part.
 - **Drop-in for ritto-esp:** same terminal order, same ESPHome node and entity names,
   so existing automations keep working.

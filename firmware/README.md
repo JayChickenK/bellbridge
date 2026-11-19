@@ -9,7 +9,7 @@ adapted to this board:
 - GPIO19 (door opener), GPIO20 (floor/apartment) and GPIO18 (chime) instead of the XIAO
   pins D8/D9/D10.
 - No XIAO antenna switch (the module has a PCB antenna and no RF switch).
-- Encrypted Home Assistant API and OTA updates, both with the API key.
+- Encrypted Home Assistant API; firmware updates over Wi-Fi (OTA) need a password.
 - The bell logic runs in scripts with mode `restart`, so a repeated ring extends the 4 s
   window. In ritto-esp a second copy ran in parallel, and two presses on the apartment
   bell 2.5–4 s apart could report a false "Doorbell Main".
@@ -20,10 +20,10 @@ The node name (`ritto-intercom`) and the entity names of ritto-esp are unchanged
 Home Assistant automations written for ritto-esp keep working; the new entities come on
 top.
 
-Needs ESPHome 2026.9.0 or later for the OTA encryption (2026.8.2 and older reject it).
-Validated with ESPHome 2026.9.0, 2026.9.1 and 2026.10.0 (`esphome config`). Compiled
-without warnings with ESPHome 2026.9.1 (ESP-IDF 5.5.5): the image takes 862 kB, 47 % of
-the 1.75 MB app partition, so OTA updates have room; RAM use is 32 %.
+Validated with ESPHome 2026.8.2 and 2026.11.0 (`esphome config`). With OTA encryption
+instead of the password, it compiled without warnings with ESPHome 2026.9.1 (ESP-IDF
+5.5.5): the image took 862 kB, 47 % of the 1.75 MB app partition, so OTA updates have
+room; RAM use was 32 %.
 <!-- TODO after testing: "Built and flashed with ESPHome <version> on BellBridge v1.13." -->
 
 ## Entities in Home Assistant
@@ -47,14 +47,13 @@ The raw inputs and the opener output are internal and not exposed.
 
 ## First flash (USB-C)
 
-1. Install ESPHome 2026.9 or later (`pip install esphome`, or use the ESPHome add-on /
-   device builder).
+1. Install ESPHome (`pip install esphome`, or use the ESPHome add-on / device builder).
 2. Create the secrets file and fill it in:
    ```bash
    cp firmware/secrets.yaml.example firmware/secrets.yaml
    python3 -c "import base64, os; print(base64.b64encode(os.urandom(32)).decode())"
    ```
-   Put the generated key into `api_encryption_key`; it also secures OTA updates.
+   Put the generated key into `api_encryption_key`, and set a long random `ota_password`.
    `secrets.yaml` is ignored by git; never commit or share it.
 3. Connect BellBridge to the computer with a USB-C data cable. The module shows up as a
    USB serial/JTAG device (Espressif VID 303A).
@@ -102,7 +101,11 @@ not buzz while the Ritto is still ringing, raise it.
 
 ## Security
 
-The API and OTA updates are encrypted with the same key (`api_encryption_key`); without
-it, no device on the network can press **Open Door**, switch on **Auto Open** or flash
-other firmware. ESPHome 2026.8 and older reject `encryption: {}` under `ota:`; there,
-use `password: !secret ota_password` instead and add `ota_password` to `secrets.yaml`.
+The Home Assistant API is encrypted with `api_encryption_key`; without the key, no device
+on the network can press **Open Door** or switch on **Auto Open**. Firmware updates over
+Wi-Fi need `ota_password`, so no other device can load its own firmware. ESPHome 2026.9
+and later can also encrypt OTA updates with the API key (`encryption: {}` under `ota:`),
+but older versions, including older ESPHome Builder add-ons, reject that option, so the
+configuration uses the password. ESPHome 2026.11 warns that the password costs flash and
+RAM; once your ESPHome is 2026.9 or later, you can replace the `password:` line with
+`encryption: {}` and drop `ota_password`.

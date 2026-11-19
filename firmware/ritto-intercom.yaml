@@ -31,17 +31,16 @@ esp32:
 # Logs go to the USB-C socket (USB Serial/JTAG on GPIO12/13).
 logger:
 
-# BellBridge: the API and OTA uploads are encrypted with the same key. Without it any device
-# on the network could press "Open Door" or load other firmware. Home Assistant asks for
-# the key when the device is added.
+# BellBridge: the API is encrypted with this key. Without it any device on the network
+# could press "Open Door". Home Assistant asks for the key when the device is added.
 api:
   encryption:
     key: !secret api_encryption_key
 
-# BellBridge: an empty encryption block takes the API key (ESPHome 2026.9 or later).
+# BellBridge: OTA uploads need this password, so no other device can load firmware.
 ota:
   - platform: esphome
-    encryption: {}
+    password: !secret ota_password
 
 wifi:
   ssid: !secret wifi_ssid
