@@ -1,6 +1,21 @@
 # Changelog
 
-## [Unreleased]
+## [1.14] - 2026-11-20
+
+<!-- TODO after testing: add a line about the test result. -->
+
+Released before the first board was built and tested. Same parts, values, placement and
+copper as v1.13; only the silkscreen changes. The back silkscreen reads "BellBridge v1.14".
+
+### Changed from v1.13
+
+- J1's labels (DOOR, CHIME, FLOOR, GND) are 0.6 mm wide instead of 0.55 mm. KiCad caps a
+  text's stroke at a quarter of its character size, so they were plotted with 0.138 mm
+  lines, below PCBWay's 0.15 mm minimum; now they get the full 0.15 mm. `generate.py`
+  refuses silkscreen text that would plot thinner.
+- Schematic: TP1 and TP2 are left out of the bill of materials, as on the board, so a BOM
+  exported from the schematic no longer lists them.
+- New renders of the top, the bottom and the assembled board.
 
 ### Firmware
 

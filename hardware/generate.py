@@ -1,4 +1,4 @@
-# BellBridge v1.13: generator for the PCBWay-assembled Ritto 7630 TwinBus / ESP32-C6 board.
+# BellBridge v1.14: generator for the PCBWay-assembled Ritto 7630 TwinBus / ESP32-C6 board.
 # Writes the KiCad board, BOM and CPL and, when KiCad's DRC is clean, the PCBWay order zip.
 # Millimetres, KiCad 20240108. KiCad reads this file with the origin at the TOP left and Y
 # pointing DOWN: y = 0 is the top edge of the top view, y = BOARD_H the bottom edge. Footprints
@@ -28,6 +28,9 @@
 # instead of 6 mm. The order files are written with LF line endings on every platform.
 # v1.13: GND_BUS routed with tracks between OK1-OK3 and J1 instead of relying on the pour
 # (bus-ground pad vias placed after the search); parts and all other copper as in v1.12.
+# v1.14: J1's labels 0.6 mm wide instead of 0.55 mm, so KiCad plots them with the full
+# 0.15 mm stroke (it caps a text's stroke at a quarter of its character size: 0.138 mm at
+# 0.55 mm); silk() refuses text that would plot thinner. Copper as in v1.13.
 
 from __future__ import annotations
 
@@ -44,7 +47,7 @@ import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-NAME, VERSION = "BellBridge", "1.13"
+NAME, VERSION = "BellBridge", "1.14"
 SLUG = NAME.lower()
 BOARD_W = 31.4
 BOARD_H = 27.5
@@ -2011,6 +2014,10 @@ def write_pcb(path: Path):
         line(x0, y1, x0, y0, "Edge.Cuts")
 
     def silk(text, x, y, rot=0, size=0.9, justify="left", width=None, layer="F.SilkS"):
+        # KiCad plots a text's stroke at most a quarter of its smaller character size, so text
+        # narrower or lower than 0.6 mm would come out thinner than PCBWay's 0.15 mm minimum.
+        if min(size, width or size) * 0.25 < 0.15 - 1e-9:
+            raise SystemExit(f"silkscreen text {text!r} ({size} x {width or size} mm) would plot thinner than 0.15 mm")
         parts = [justify] if justify != "center" else []
         if layer.startswith("B."):
             parts.append("mirror")
@@ -2025,7 +2032,7 @@ def write_pcb(path: Path):
     j1 = next(q for q in PARTS if q.ref == "J1")
     xb = j1.x - TB_BACK
     for name, pin in (("DOOR", "1"), ("CHIME", "2"), ("FLOOR", "3"), ("GND", "4")):
-        silk(name, xb - 0.25, at("J1", pin)[1], 0, 0.8, "right", 0.55)
+        silk(name, xb - 0.25, at("J1", pin)[1], 0, 0.8, "right", 0.6)
     # J1 assembly marks. The holes do not show which way round the block goes, so the back
     # face and both ends of the body are drawn, and an arrow between each pair of pins points
     # at the wire openings (the right edge).

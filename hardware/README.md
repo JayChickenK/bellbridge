@@ -1,4 +1,4 @@
-# BellBridge hardware (v1.13)
+# BellBridge hardware (v1.14)
 
 The board is not drawn by hand. [`generate.py`](generate.py) places and routes every part,
 checks the result, and writes the KiCad board and the PCBWay order files. To change the
@@ -219,14 +219,14 @@ most 0.1 N·m. Rated 150 V / 7 A (UL), −40 to +105 °C.
 | `bellbridge.kicad_sch` | schematic of the board with the same references, values, footprints and net names, so KiCad's ERC and its schematic-to-board check can run; `generate.py` does not write it, so update it by hand after a board change |
 | `bom.csv`, `bom.xlsx` | bill of materials in the columns of PCBWay's BOM quotation: Item #, *Designator, *Qty, Manufacturer, *Mfg Part #, Description / Value, Vendor Part # (LCSC), *Package/Footprint, Mounting Type, Customer Reply (what may be substituted); the same table as text and as a spreadsheet |
 | `cpl.csv` | placement: origin at the board's lower-left corner, mm, Y up, KiCad rotation; J1 at its body centre |
-| `pcbway/` | Gerbers, drill files, job file, BOM, CPL, `PCBWAY-REMARKS.txt` and the order zip `bellbridge-v1.13-pcbway.zip` |
+| `pcbway/` | Gerbers, drill files, job file, BOM, CPL, `PCBWAY-REMARKS.txt` and the order zip `bellbridge-v1.14-pcbway.zip` |
 | `drc-report.json` | KiCad DRC report of the last run |
 | `plots/` | quick previews from `generate.py` (net colours, both sides) |
 
 ## Regenerating
 
 Requirements: Python 3.9 or later (tested with 3.11 and 3.13); Pillow (optional, only for
-`plots/`); KiCad 10 for the Gerbers and the DRC (tested with 10.0.6). On Windows
+`plots/`); KiCad 10 for the Gerbers and the DRC (tested with 10.0.6 and 10.0.8). On Windows
 `generate.py` finds a default KiCad 10 install; elsewhere `kicad-cli` must be on `PATH`.
 
 ```bash
@@ -244,10 +244,26 @@ DRC with refilled pours. `pcbway/` and the order zip are written only when the D
 ```
 python-drc 0
 kicad-drc violations 0 unconnected 0 {}
-zip .../pcbway/bellbridge-v1.13-pcbway.zip
+zip .../pcbway/bellbridge-v1.14-pcbway.zip
 ```
 
-## Design verification (v1.13)
+## Design verification (v1.14)
+
+v1.14 changes only the silkscreen: J1's labels are 0.6 mm wide instead of 0.55 mm, so KiCad
+plots them with 0.15 mm lines (it caps a text's stroke at a quarter of its character size,
+which gave 0.138 mm). Regenerated, its copper, solder mask, paste, outline and drill files,
+BOM and CPL are the same as v1.13's (only dates and the KiCad version in the file headers
+differ).
+
+- `generate.py` checks for v1.14: 0 errors. KiCad 10.0.8 DRC with all severities and
+  refilled pours: 0 violations, 0 unconnected items. KiCad's schematic-to-board check finds
+  no difference in nets or parts; it only names the 27 unconnected pins differently.
+- An independent check that starts from the order files alone: the nets rebuilt from the
+  Gerber copper and the plated holes match the schematic's netlist (47 nets, 133 pins).
+  Measured on the Gerbers: 0.20 mm smallest gap between nets, 0.20 mm narrowest track,
+  0.175 mm via ring, 0.36 mm between holes, 0.475 mm copper to edge, 0.10 mm narrowest
+  mask web; every silkscreen line at least 0.15 mm (the arrows are filled shapes); paste
+  only on pads; each CPL position on its part's pads, with the rotation matching pin 1.
 
 v1.13 routes the bus ground (`GND_BUS`) with tracks between OK1, OK2, OK3 and J1: with the bus
 ground pour removed as a test, every bus-ground pad stays connected (v1.12: 6 connections

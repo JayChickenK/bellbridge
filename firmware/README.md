@@ -1,7 +1,7 @@
 # BellBridge firmware (ESPHome)
 
 [`ritto-intercom.yaml`](ritto-intercom.yaml) is the ESPHome configuration for BellBridge
-(v1.0, v1.1, v1.12 and v1.13 use the same GPIOs).
+(v1.0, v1.1, v1.12, v1.13 and v1.14 use the same GPIOs).
 It is the configuration of [duramson/ritto-esp](https://github.com/duramson/ritto-esp)
 adapted to this board:
 
@@ -24,7 +24,7 @@ Validated with ESPHome 2026.8.2 and 2026.11.0 (`esphome config`). Compiled with 
 2026.11.0 (ESP-IDF 5.5.6): the image takes 866 kB, 47 % of the 1.75 MB app partition, so
 OTA updates have room; RAM use is 32 %. The only warning is ESPHome's note on the OTA
 password (see [Security](#security)).
-<!-- TODO after testing: "Built and flashed with ESPHome <version> on BellBridge v1.13." -->
+<!-- TODO after testing: "Built and flashed with ESPHome <version> on BellBridge v1.14." -->
 
 ## Entities in Home Assistant
 

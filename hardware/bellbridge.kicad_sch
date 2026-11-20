@@ -5219,7 +5219,7 @@
     (effects (font (size 1.27 1.27)) (justify left top))
     (uuid "ebd2b108-cc45-41ef-81d5-eb4333c16f50")
   )
-  (text "BellBridge v1.13 - Ritto 7630 TwinBus interface, ESP32-C6-MINI-1"
+  (text "BellBridge v1.14 - Ritto 7630 TwinBus interface, ESP32-C6-MINI-1"
     (at 30.48 30.48 0)
     (effects (font (size 3 3) (thickness 0.6) (bold yes)) (justify left bottom))
     (uuid "96f28923-e44a-48e0-a7cf-fc58c20129c7")
@@ -6146,7 +6146,7 @@
 		(lib_id "Connector:TestPoint")
 		(at 160.02 137.16 0)
 		(unit 1)
-		(in_bom yes)
+		(in_bom no)
 		(on_board yes)
 		(dnp no)
 		(uuid "6fed2cea-147b-42b1-b280-b5f9533b2337")
@@ -6206,7 +6206,7 @@
 		(lib_id "Connector:TestPoint")
 		(at 175.26 137.16 0)
 		(unit 1)
-		(in_bom yes)
+		(in_bom no)
 		(on_board yes)
 		(dnp no)
 		(uuid "8b2c7928-f56f-4091-9ddd-a2055aa4ee39")
