@@ -7,7 +7,7 @@ you go, then copy the summary into the [main README](../README.md#test-results).
 
 | | |
 | --- | --- |
-| Board revision | v1.14 |
+| Board revision | v1.15 |
 | Boards received / tested | |
 | PCBWay order (date, finish) | |
 | ESPHome version | |

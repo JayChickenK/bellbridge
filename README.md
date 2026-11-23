@@ -9,20 +9,20 @@ locally through [ESPHome](https://esphome.io/) with no cloud involved. It is the
 26.2 × 27.5 mm board that PCBWay assembles completely, ESP32-C6 module included.
 
 <!-- TODO after testing: replace the status line, e.g.
-> **Status:** v1.14 built and tested on a Ritto 7630 (YYYY-MM-DD), see the [test report](docs/testing.md).
+> **Status:** v1.15 built and tested on a Ritto 7630 (YYYY-MM-DD), see the [test report](docs/testing.md).
 -->
 > [!WARNING]
-> **Status:** hardware v1.14 is designed and checked, but it has not yet been built or
+> **Status:** hardware v1.15 is designed and checked, but it has not yet been built or
 > tested on an intercom. It is v1.1, the smaller follow-up of v1.0, with three part values
-> changed (v1.12), the bus ground routed with tracks (v1.13) and the terminal labels printed
-> with thicker lines (v1.14); see the [changelog](CHANGELOG.md).
+> changed (v1.12), the bus ground routed with tracks (v1.13), the terminal labels printed
+> with thicker lines (v1.14) and smoother tracks (v1.15); see the [changelog](CHANGELOG.md).
 
 <!-- TODO: add photos, e.g.
-![BellBridge v1.14, assembled](docs/images/assembled-top.jpg)
+![BellBridge v1.15, assembled](docs/images/assembled-top.jpg)
 ![BellBridge installed behind a Ritto 7630](docs/images/installed.jpg)
 -->
 
-![BellBridge v1.14 with all parts (render)](docs/images/render-assembled.png)
+![BellBridge v1.15 with all parts (render)](docs/images/render-assembled.png)
 
 The assembled board as a KiCad render: USB-C at the top edge, the module on the left
 with its antenna sticking out 5.2 mm past the edge, the screw terminal on the right edge.
@@ -90,7 +90,7 @@ Details, the parts list and the design checks are in [hardware/README.md](hardwa
 
 ## Versions
 
-| | v1.14 (current), [v1.13](https://github.com/JayChickenK/bellbridge/tree/v1.13), [v1.12](https://github.com/JayChickenK/bellbridge/tree/v1.12) and [v1.1](https://github.com/JayChickenK/bellbridge/tree/v1.1) | [v1.0](https://github.com/JayChickenK/bellbridge/tree/v1.0) |
+| | v1.15 (current), [v1.14](https://github.com/JayChickenK/bellbridge/tree/v1.14), [v1.13](https://github.com/JayChickenK/bellbridge/tree/v1.13), [v1.12](https://github.com/JayChickenK/bellbridge/tree/v1.12) and [v1.1](https://github.com/JayChickenK/bellbridge/tree/v1.1) | [v1.0](https://github.com/JayChickenK/bellbridge/tree/v1.0) |
 | --- | --- | --- |
 | Board | 26.2 × 27.5 mm; 31.4 mm wide with the antenna | 36.4 × 31.5 mm |
 | Antenna | past the left edge, as Espressif recommends | on the board, at its edge |
@@ -103,8 +103,9 @@ Details, the parts list and the design checks are in [hardware/README.md](hardwa
 
 v1.12 is v1.1 with three part values changed (R6 10 kΩ, C6 10 µF, C2 22 µF) and a wider
 panel note for PCBWay; the copper is the same. v1.13 adds tracks for the bus ground, so it no
-longer depends on the ground pour alone, and v1.14 prints the terminal labels with thicker
-lines. All versions have the same circuit,
+longer depends on the ground pour alone; v1.14 prints the terminal labels with thicker
+lines, and v1.15 has smoother tracks, redrawn by hand in KiCad. All versions have the same
+circuit,
 terminal order and GPIOs. v1.0 has been assembled (photos below); the later versions have
 not been built yet. The firmware in this branch runs on
 all of them; the copy in the v1.0 files has a bell-logic bug (see the

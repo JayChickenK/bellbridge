@@ -1,4 +1,4 @@
-# BellBridge v1.14: generator for the PCBWay-assembled Ritto 7630 TwinBus / ESP32-C6 board.
+# BellBridge v1.15: generator for the PCBWay-assembled Ritto 7630 TwinBus / ESP32-C6 board.
 # Writes the KiCad board, BOM and CPL and, when KiCad's DRC is clean, the PCBWay order zip.
 # Millimetres, KiCad 20240108. KiCad reads this file with the origin at the TOP left and Y
 # pointing DOWN: y = 0 is the top edge of the top view, y = BOARD_H the bottom edge. Footprints
@@ -31,6 +31,9 @@
 # v1.14: J1's labels 0.6 mm wide instead of 0.55 mm, so KiCad plots them with the full
 # 0.15 mm stroke (it caps a text's stroke at a quarter of its character size: 0.138 mm at
 # 0.55 mm); silk() refuses text that would plot thinner. Copper as in v1.13.
+# v1.15: smoother tracks, redrawn by hand in KiCad, on 17 nets (all but VBUS keep their pads,
+# vias and zones): hand_routes.json replaces the routed tracks of those nets after routing.
+# check_board() holds those tracks to the router's J2-plate and U1-pad keep-outs too.
 
 from __future__ import annotations
 
@@ -47,7 +50,7 @@ import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-NAME, VERSION = "BellBridge", "1.14"
+NAME, VERSION = "BellBridge", "1.15"
 SLUG = NAME.lower()
 BOARD_W = 31.4
 BOARD_H = 27.5
@@ -128,6 +131,10 @@ class Pad:
         self.hw = hw
         self.hh = hh
         self.drill = drill
+        # Corner radius of the copper outline, as _emit_pad() writes it: round pads are
+        # circles, oval pads stadiums, SMD pads rounded rectangles (radius 15 % of the
+        # shorter side); other pads keep square corners.
+        self.radius = 0.0
         self.round_pad = round_pad
 
 
@@ -203,6 +210,13 @@ def add_part(ref, value, footprint, x, y, rot, pads, attr, mfr, mpn, lcsc, court
                 p.get("round", False),
             )
         )
+        q = PADS[-1]
+        if p.get("round"):
+            q.radius = q.hw
+        elif p.get("oval"):
+            q.radius = min(q.hw, q.hh)
+        elif p.get("layer", "F") != "*" and not p.get("npth"):
+            q.radius = 0.15 * 2 * min(q.hw, q.hh)
     return part
 
 
@@ -593,6 +607,22 @@ def place_all():
     add_part("TP2", "GND", "TestPoint_Pad_D1.5mm", 17.55, 18.00, 0, test_pad("GND_MCU"), "board_only", "", "", "", tp)
 
 
+def j2_shell_box(x, y, rot):
+    # Board-space box of J2's steel bottom plate, for J2 placed at (x, y, rot). route() keeps
+    # signal copper off it on the front, and check_board() checks every track against it.
+    pts = [rot_xy(lx, ly, rot) for lx in (-4.47, 4.47) for ly in (USB_FRONT_Y, USB_FRONT_Y - USB_SHELL_LEN)]
+    return (x + min(a for a, _ in pts), y + min(b for _, b in pts), x + max(a for a, _ in pts), y + max(b for _, b in pts))
+
+
+def module_epad_box(x, y, rot):
+    # Board-space box around U1's ground pad 49 (local x -2.7..2.7, y 0..5.4) with 1 mm margin
+    # on every side, for U1 placed at (x, y, rot): no front-layer signal copper inside
+    # (route() and check_board()).
+    ex0, ey0 = rot_xy(-3.7, -1.0, rot)
+    ex1, ey1 = rot_xy(3.7, 6.4, rot)
+    return (x + min(ex0, ex1), y + min(ey0, ey1), x + max(ex0, ex1), y + max(ey0, ey1))
+
+
 def route():
     # Short copper is drawn by hand. Every other net is a clearance-checked
     # search on a 0.05 mm grid, front and back, with 0.65 / 0.30 vias.
@@ -672,9 +702,7 @@ def route():
     # The receptacle's steel bottom plate lies on the board: no signal copper on the front and
     # no signal via under it, where only solder mask would separate them from the shell.
     j2s = next(q for q in PARTS if q.ref == "J2")
-    _sx = [rot_xy(lx, ly, j2s.rot) for lx in (-4.47, 4.47) for ly in (USB_FRONT_Y, USB_FRONT_Y - USB_SHELL_LEN)]
-    J2_SHELL = (j2s.x + min(a for a, _ in _sx), j2s.y + min(b for _, b in _sx),
-                j2s.x + max(a for a, _ in _sx), j2s.y + max(b for _, b in _sx))
+    J2_SHELL = j2_shell_box(j2s.x, j2s.y, j2s.rot)
 
     def blocked(x, y, layer_name, half, net, clr, is_via):
         reach = VIA_R if is_via else half
@@ -755,10 +783,7 @@ def route():
         return False
 
     u1 = next(p for p in PARTS if p.ref == "U1")
-    # Ground pad 49 spans local x -2.7..2.7, y 0..5.4; 1 mm margin on every side.
-    ex0, ey0 = rot_xy(-3.7, -1.0, u1.rot)
-    ex1, ey1 = rot_xy(3.7, 6.4, u1.rot)
-    MODULE_EPAD = (u1.x + min(ex0, ex1), u1.y + min(ey0, ey1), u1.x + max(ex0, ex1), u1.y + max(ey0, ey1))
+    MODULE_EPAD = module_epad_box(u1.x, u1.y, u1.rot)
 
     def remember_seg(net, layer_name, x1, y1, x2, y2, w):
         seg = ("seg", x1, y1, x2, y2, layer_name, net, w)
@@ -1554,7 +1579,10 @@ def check_board():
         if p.drill and p.pin == "" and abs(p.hw * 2 - p.drill) < 0.01:
             continue  # bare NPTH, checked as a hole
         for layer in _layers(p.layer):
-            copper.append(("pad", p, layer, p.x - p.hw, p.y - p.hh, p.x + p.hw, p.y + p.hh))
+            # A rounded outline is its inner rectangle grown by the corner radius, so gaps are
+            # measured to that rectangle and the radius taken off: exact, as KiCad's DRC sees it.
+            r = p.radius
+            copper.append(("pad", p, layer, p.x - p.hw + r, p.y - p.hh + r, p.x + p.hw - r, p.y + p.hh - r))
     for s in SEGS:
         copper.append(("seg", s, s.layer, 0, 0, 0, 0))
     for v in VIAS:
@@ -1573,7 +1601,7 @@ def check_board():
             bx0, by0, bx1, by1 = b[3], b[4], b[5], b[6]
             dx = max(ax0 - bx1, bx0 - ax1, 0)
             dy = max(ay0 - by1, by0 - ay1, 0)
-            return math.hypot(dx, dy)
+            return math.hypot(dx, dy) - ia.radius - ib.radius
         if ka == "seg" and kb == "seg":
             return _seg_dist(ia, ib) - ia.w / 2 - ib.w / 2
         if ka == "via" and kb == "via":
@@ -1586,14 +1614,14 @@ def check_board():
             if pad.round_pad:
                 return _point_seg(pad.x, pad.y, seg.x1, seg.y1, seg.x2, seg.y2) - pad.hw - seg.w / 2
             dist = _seg_rect(seg.x1, seg.y1, seg.x2, seg.y2, pad_item[3], pad_item[4], pad_item[5], pad_item[6])
-            return dist - seg.w / 2
+            return dist - seg.w / 2 - pad.radius
         if "via" in (ka, kb) and "pad" in (ka, kb):
             via_i = ia if ka == "via" else ib
             pad_item = a if ka == "pad" else b
             pad = pad_item[1]
             if pad.round_pad:
                 return math.hypot(via_i.x - pad.x, via_i.y - pad.y) - pad.hw - via_i.size / 2
-            return _point_rect(via_i.x, via_i.y, pad_item[3], pad_item[4], pad_item[5], pad_item[6]) - via_i.size / 2
+            return _point_rect(via_i.x, via_i.y, pad_item[3], pad_item[4], pad_item[5], pad_item[6]) - via_i.size / 2 - pad.radius
         if "via" in (ka, kb) and "seg" in (ka, kb):
             via_i = ia if ka == "via" else ib
             seg = ia if ka == "seg" else ib
@@ -1657,6 +1685,23 @@ def check_board():
             consider_box(s.net, s.layer, x - s.w / 2, y - s.w / 2, x + s.w / 2, y + s.w / 2, f"track {s.net} {s.layer}")
     for v in VIAS:
         consider_box(v.net, "F", v.x - v.size / 2, v.y - v.size / 2, v.x + v.size / 2, v.y + v.size / 2, f"via {v.net}")
+
+    # route() keeps signal copper off J2's steel plate (front tracks and all vias) and front
+    # tracks off U1's ground pad area. Tracks from hand_routes.json skip the router, so the
+    # same rules are checked here for every track and via.
+    j2s = next(q for q in PARTS if q.ref == "J2")
+    u1 = next(q for q in PARTS if q.ref == "U1")
+    plate = j2_shell_box(j2s.x, j2s.y, j2s.rot)
+    epad = module_epad_box(u1.x, u1.y, u1.rot)
+    for s in SEGS:
+        if s.layer != "F" or s.net == "GND_MCU":
+            continue
+        for name, bx in (("J2 steel plate", plate), ("U1 ground pad area", epad)):
+            if _seg_rect(s.x1, s.y1, s.x2, s.y2, *bx) < s.w / 2 - 1e-3:
+                err(f"{name}: track {s.net} F ({s.x1:.2f},{s.y1:.2f})-({s.x2:.2f},{s.y2:.2f})")
+    for v in VIAS:
+        if v.net != "GND_MCU" and _point_rect(v.x, v.y, *plate) < v.size / 2 - 1e-3:
+            err(f"J2 steel plate: via {v.net} ({v.x:.2f},{v.y:.2f})")
 
     # Connectivity, including a same-net zone when a pad centre lies inside it.
     parent = {}
@@ -2589,9 +2634,27 @@ def write_fab(errors: list[str]):
     print(f"zip {zip_path}")
 
 
+def apply_hand_routes():
+    # Tracks redrawn by hand in KiCad (v1.15): for every net in hand_routes.json, its tracks
+    # replace the routed ones. Pads, vias and zones stay generated, and the checks below and
+    # KiCad's DRC cover these tracks like routed ones.
+    path = ROOT / "hand_routes.json"
+    if not path.exists():
+        return
+    nets = json.loads(path.read_text())["nets"]
+    SEGS[:] = [s for s in SEGS if s.net not in nets]
+    for net, segs in nets.items():
+        if net not in NETS:
+            raise SystemExit(f"hand_routes.json: unknown net {net}")
+        for layer, x1, y1, x2, y2, w in segs:
+            SEGS.append(Seg(net, layer, x1, y1, x2, y2, w))
+    print(f"hand routes: {sum(len(v) for v in nets.values())} tracks on {len(nets)} nets")
+
+
 def main():
     place_all()
     route()
+    apply_hand_routes()
     place_pin1_dots()
     errors = check_board() + check_silk() + check_holes() + check_module_pads()
     print(f"parts {len(PARTS)} pads {len(PADS)} tracks {len(SEGS)} vias {len(VIAS)}")

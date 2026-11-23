@@ -1,5 +1,32 @@
 # Changelog
 
+## [1.15] - 2026-11-23
+
+<!-- TODO after testing: add a line about the test result. -->
+
+Released before the first board was built and tested. Same parts, values, placement, vias and
+copper pours as v1.14, with smoother tracks. The back silkscreen reads "BellBridge v1.15".
+
+### Changed from v1.14
+
+- Smoother tracks on 17 nets, redrawn by hand in KiCad: 98 tracks replace 123 stair-stepped
+  ones. The USB data lines are about 2 mm shorter, and U3 stays in their path. The 1.6 mm
+  isolation barrier and the power track widths (VBUS 0.5 mm, 3V3 0.4 mm) are unchanged.
+  `hardware/hand_routes.json` holds these tracks, and `generate.py` lays them down instead
+  of its own routes for those nets.
+- The redrawn EN track ends its diagonal 0.25 mm earlier and turns into its via from below,
+  so it keeps 1 mm from U1's ground pad like every routed track (it came within 0.79 mm).
+- VBUS keeps the routing of v1.14, so both vias next to the regulator still carry the
+  supply. A short GND_BUS track that lay inside a wider one at OK1 is gone; the copper is
+  the same.
+- `generate.py` checks clearances against the pads' real outline (rounded corners, oval
+  ends), as KiCad's DRC does. The new tracks pass some pad corners at 0.20 mm, which the old
+  rectangular model reported as too close.
+- `generate.py` also checks hand-drawn tracks against the router's own keep-outs: no
+  signal track on the front over J2's steel plate or within 1 mm of U1's ground pad, no
+  signal via under the plate. KiCad's DRC does not know these rules.
+- New renders of the top, the bottom and the assembled board.
+
 ## [1.14] - 2026-11-20
 
 <!-- TODO after testing: add a line about the test result. -->

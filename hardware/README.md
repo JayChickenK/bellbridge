@@ -1,8 +1,11 @@
-# BellBridge hardware (v1.14)
+# BellBridge hardware (v1.15)
 
-The board is not drawn by hand. [`generate.py`](generate.py) places and routes every part,
-checks the result, and writes the KiCad board and the PCBWay order files. To change the
-board, change the script and run it again (see [Regenerating](#regenerating)).
+[`generate.py`](generate.py) places and routes every part, checks the result, and writes the
+KiCad board and the PCBWay order files. Since v1.15 the tracks of 17 nets were redrawn by
+hand in KiCad; [`hand_routes.json`](hand_routes.json) holds them, and `generate.py` lays them
+down instead of its own routes for those nets. To change the board, change the script or
+`hand_routes.json` and run it again (see [Regenerating](#regenerating)); edits made only in
+KiCad are overwritten by the next run.
 
 ## Overview
 
@@ -215,11 +218,12 @@ most 0.1 N·m. Rated 150 V / 7 A (UL), −40 to +105 °C.
 | File | Content |
 | --- | --- |
 | `generate.py` | the design: placement, routing, checks, all outputs |
+| `hand_routes.json` | the hand-drawn tracks of 17 nets (v1.15), laid down by `generate.py` instead of its own routes |
 | `bellbridge.kicad_pcb`, `bellbridge.kicad_pro` | KiCad board (ground pours are unfilled; press **B** in KiCad to fill them) |
 | `bellbridge.kicad_sch` | schematic of the board with the same references, values, footprints and net names, so KiCad's ERC and its schematic-to-board check can run; `generate.py` does not write it, so update it by hand after a board change |
 | `bom.csv`, `bom.xlsx` | bill of materials in the columns of PCBWay's BOM quotation: Item #, *Designator, *Qty, Manufacturer, *Mfg Part #, Description / Value, Vendor Part # (LCSC), *Package/Footprint, Mounting Type, Customer Reply (what may be substituted); the same table as text and as a spreadsheet |
 | `cpl.csv` | placement: origin at the board's lower-left corner, mm, Y up, KiCad rotation; J1 at its body centre |
-| `pcbway/` | Gerbers, drill files, job file, BOM, CPL, `PCBWAY-REMARKS.txt` and the order zip `bellbridge-v1.14-pcbway.zip` |
+| `pcbway/` | Gerbers, drill files, job file, BOM, CPL, `PCBWAY-REMARKS.txt` and the order zip `bellbridge-v1.15-pcbway.zip` |
 | `drc-report.json` | KiCad DRC report of the last run |
 | `plots/` | quick previews from `generate.py` (net colours, both sides) |
 
@@ -235,8 +239,9 @@ python generate.py
 ```
 
 The run takes well under a minute. It places all parts and routes them with a deterministic
-router. Then it runs its own checks: isolation barrier, clearances, antenna keep-out,
-via-to-pad and via-to-hole distances and pin-1 marks. It writes the board, BOM, CPL and
+router, then puts the tracks from `hand_routes.json` in place of the routes of those nets.
+Then it runs its own checks: isolation barrier, clearances, antenna keep-out, J2's steel
+plate and U1's ground pad, via-to-pad and via-to-hole distances and pin-1 marks. It writes the board, BOM, CPL and
 previews. After that, `kicad-cli` exports Gerbers, drill and position files and runs the
 DRC with refilled pours. `pcbway/` and the order zip are written only when the DRC reports
 **0 violations and 0 unconnected items**. The output ends with:
@@ -244,10 +249,28 @@ DRC with refilled pours. `pcbway/` and the order zip are written only when the D
 ```
 python-drc 0
 kicad-drc violations 0 unconnected 0 {}
-zip .../pcbway/bellbridge-v1.14-pcbway.zip
+zip .../pcbway/bellbridge-v1.15-pcbway.zip
 ```
 
-## Design verification (v1.14)
+## Design verification (v1.15)
+
+v1.15 keeps the parts, vias and copper pours of v1.14 and replaces 123 tracks on 17 nets with
+98 smoother ones, redrawn by hand in KiCad (`hand_routes.json`). VBUS keeps its v1.14 routing.
+
+- `generate.py` checks for v1.15: 0 errors, with clearances now measured against the pads'
+  real outline (rounded corners, oval ends), and the keep-outs of J2's steel plate and U1's
+  ground pad checked for hand-drawn tracks too. KiCad 10.0.8 DRC with all severities and
+  refilled pours: 0 violations, 0 unconnected items; the schematic-to-board check finds no
+  difference in nets or parts.
+- Track shapes on the 17 redrawn nets (v1.14 in brackets): 21 % of the track length at 45°
+  (2 %), 4 right-angle corners (52), no stair steps (11), 4 pieces under 0.3 mm (35), 234 mm
+  of track (243); no leftover copper.
+- The nets rebuilt from the Gerber copper and the plated holes match the schematic's
+  netlist (47 nets, 133 pins). The isolation between the two grounds stays at 1.60 mm on
+  both layers, pours included; no signal copper lies under the USB-C shell's steel plate; U3
+  stays in the D+/D− path; VBUS keeps a 0.5 mm path to the regulator and 3V3 a 0.4 mm path to
+  the module; every via has copper on both layers. Measured on the Gerbers: 0.20 mm smallest
+  gap between nets, 0.175 mm via ring, 0.475 mm copper to edge.
 
 v1.14 changes only the silkscreen: J1's labels are 0.6 mm wide instead of 0.55 mm, so KiCad
 plots them with 0.15 mm lines (it caps a text's stroke at a quarter of its character size,
