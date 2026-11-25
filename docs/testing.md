@@ -7,7 +7,7 @@ you go, then copy the summary into the [main README](../README.md#test-results).
 
 | | |
 | --- | --- |
-| Board revision | v1.15 |
+| Board revision | v2.0 |
 | Boards received / tested | |
 | PCBWay order (date, finish) | |
 | ESPHome version | |
@@ -17,12 +17,12 @@ you go, then copy the summary into the [main README](../README.md#test-results).
 
 | # | Check | Expected | Result |
 | --- | --- | --- | --- |
-| 1.1 | U1 (module) | antenna sticking out past the left edge, undamaged; silkscreen pin-1 dot beside the module's lower-left corner (the small dot on the module's shield sits at its lower right, as in Espressif's drawing) | |
-| 1.2 | J2 (USB-C) | opening at the top edge; signal pads and the four shell lugs soldered | |
-| 1.3 | U2, U3 | pin 1 at the dots (U2 lower right; U3 top left, just below J2) | |
-| 1.4 | OK1–OK3 | pin 1 at the dots | |
-| 1.5 | J1 | wire openings toward the right edge, four pins soldered | |
-| 1.6 | Solder joints | no bridges at U1, J2, U3 (0.5 mm pitch) | |
+| 1.1 | U1 (module) | antenna sticking out past the top edge, undamaged; silkscreen pin-1 dot beside the module's upper-left corner (the small dot on the module's shield sits at its lower left, as in Espressif's drawing) | |
+| 1.2 | J2 (USB-C) | opening at the bottom edge; signal pads and the four shell lugs soldered | |
+| 1.3 | U2, U3 | pin 1 at the dots (U2 lower left; U3 bottom right, just above J2) | |
+| 1.4 | OK1–OK3 | pin 1 at the dots (upper left on OK1, lower right on OK2 and OK3) | |
+| 1.5 | J1 | wire openings toward the bottom edge, four pins soldered | |
+| 1.6 | Solder joints | no bridges at U1, J2, U3 (0.5 mm pitch); no 0402 part standing on one end | |
 
 ## 2. Isolation and power
 
@@ -83,7 +83,7 @@ reads as a held apartment button.
 
 ## Problems found
 
-<!-- TODO: list every problem, its workaround, and whether it needs a hardware change (v1.2).
+<!-- TODO: list every problem, its workaround, and whether it needs a hardware change (v2.1).
 If none: "None." -->
 
 ## Photos

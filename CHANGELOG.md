@@ -1,5 +1,80 @@
 # Changelog
 
+## [2.0] - 2026-11-25
+
+<!-- TODO after testing: add a line about the test result. -->
+
+Released before the first board was built and tested. Same circuit, terminal order and
+GPIOs as v1.15, in a new layout for mounting inside the Ritto 7630, with smaller parts:
+Toshiba TLP293 optocouplers, the 1.5 kΩ input resistors in 0805, and the other resistors
+and the 100 nF capacitors in 0402. The back silkscreen reads "BellBridge v2.0".
+
+### Changed from v1.15
+
+- The board is turned for the Ritto 7630: the module's antenna points up and sticks out
+  5.2 mm past the top edge, and USB-C and the screw terminal sit side by side on the bottom
+  edge, so both cables leave the board downward. 27.5 × 22.8 mm, 28.0 mm tall with the
+  antenna (v1.15: 26.2 × 27.5 mm, 31.4 mm wide with the antenna to the left).
+- The USB data lines run straight from the receptacle through U3 into the module, all on
+  the front: 5.6–8.1 mm instead of 16–19 mm. U3 stays in their path.
+- The 1.6 mm isolation barrier runs down the optocoupler column and steps over to the bottom
+  edge between USB-C and the terminal, just below the module. The closest pads of the two
+  sides are now 2.4 mm apart, a USB-C shell lug and J1's GND pin at the bottom edge
+  (v1.15: 4.3 mm, across the optocouplers); copper of the two sides still keeps the full
+  1.6 mm everywhere, pours included.
+- J1's pins read DOOR, CHIME, FLOOR, GND from right to left. Their names stand above the
+  terminal in two staggered rows, and the arrows point down at the wire openings. "NO +24V"
+  sits between USB-C and the terminal.
+- Every track is new. `generate.py` draws VBUS and the bus side (FLOOR and CHIME straight
+  down into J1, no line crossing another) and routes the other nets; the tracks were then
+  smoothed in the style of v1.15's hand-drawn tracks (45° corners wherever a cut fits, no
+  stair steps, no leftover copper) and are kept in `hardware/hand_routes.json` (139 tracks
+  on 19 nets). VBUS stays 0.5 mm to the regulator, 3V3 0.45/0.4 mm to the module; no track
+  is narrower than 0.2 mm.
+- Ground pads close together share one via (OK1's and OK2's LED-side ground pads and
+  R6's, module pin 1 and C5, module pin 11 and C6, module pin 14 and C7), R10's ground runs
+  straight into the USB-C shell lug below it, and the VBUS via sits between C7 and U3, so
+  CC1 runs to R7 on the front without a via: 47 vias in all.
+- 3V3 and VBUS keep at least 1 mm from the download-mode test pads TP1 and TP2, which get
+  bridged with tweezers (v1.15: 3V3 0.7 mm from TP1); `generate.py` checks it.
+- Shorter supply and reset paths, along the copper from pad centre to pad centre (v1.15 in
+  brackets): C1 and C4 3.2 and 2.4 mm from the regulator's input (4.2, 6.5), C3 3.0 mm from
+  its output (4.1), C5 and C2 2.5 and 4.2 mm from module pin 3 (3.3, 4.8), U3's ground via
+  0.85 mm (1.7). EN reaches R8 and C6 over 2.4 and 3.6 mm on the front (11.6 and 10.1 mm,
+  on the back).
+- Resistors and the 100 nF capacitors in 0402 instead of 0603: R1, R4–R8, R10, R12
+  (UNI-ROYAL 0402WGF, 62.5 mW; R1 dissipates about 22 mW) and C4, C5, C7 (Samsung
+  CL05B104KO5NNNC, 16 V X7R). The 10 µF and 22 µF capacitors (C1, C2, C3, C6) stay 0603:
+  in 0402 an X5R part keeps much less of its capacitance at 3.3–5 V, and on VBUS (C1) the
+  usual 0402 10 µF part, rated 6.3 V, would leave little margin. The BOM keeps its 13
+  lines.
+- The 1.5 kΩ input resistors R2 and R3 in 0805 instead of 1210: Panasonic ERJ-P06F1501V
+  (LCSC C543553), an anti-surge thick-film part rated 0.5 W at 70 °C like the YAGEO
+  RC1210FR-071K5L before, so a CHIME or FLOOR wire on +24 V (0.35 W) stays within its
+  rating up to about 95 °C ambient. KOA's SG73P2ATTD1501F (0.75 W) may replace it; a
+  standard 0805 part (0.125 W) may not. LCSC had neither the Panasonic nor the YAGEO part
+  in stock on 2026-11-25.
+- Optocouplers Toshiba TLP293, CTR rank GB (SO4, 1.27 mm pitch; LCSC C77656), instead of
+  the Lite-On LTV-357T-C: same pinout and 3,750 V<sub>rms</sub>, collector voltage 80 V
+  instead of 35 V, −55 to 125 °C, 5.1 mm instead of 4.3 mm of bare board between input and
+  output pads (Toshiba's land), and a CTR of 100–600 % guaranteed at 0.5 mA as well as at
+  5 mA, so the bell inputs (about 2.4 mA) have more margin. R1 is 150 Ω instead of 220 Ω:
+  OK1's LED gets about 12 mA, and as the TLP293's CTR stays flat up to about 20 mA, DOOR
+  sinks about 12 mA or more (typically about 24 mA; the LTV-357T-C's rank C guaranteed
+  200 % at 5 mA).
+- A via takes GPIO18 off the module's lower right corner to the back layer, so the barrier
+  step sits just below the module and the shorter optocoupler column ends above it.
+- The module's lower right ground pad (U1.51) has its own via to the back pour, and
+  `generate.py`'s router keeps 0.25 mm between via holes while it routes, as its final check
+  already required.
+- CPL, renders and the PCBWay remarks follow the new layout. The panel note now asks for
+  7 mm free above each board and tabs only at two places on the left and right edges, the
+  only stretches of edge with no part and no track within 1.2 mm (see docs/ordering.md).
+
+### Firmware
+
+- Unchanged. It runs on v1.0, v1.1, v1.12 to v1.15 and v2.0.
+
 ## [1.15] - 2026-11-23
 
 <!-- TODO after testing: add a line about the test result. -->

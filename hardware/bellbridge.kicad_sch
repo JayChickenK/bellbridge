@@ -2920,7 +2920,7 @@
 			)
 			(embedded_fonts no)
 		)
-		(symbol "Isolator:LTV-357T"
+		(symbol "Isolator:TLP293"
 			(property "Reference" "U"
 				(at -5.334 4.826 0)
 				(show_name no)
@@ -2932,7 +2932,7 @@
 					(justify left)
 				)
 			)
-			(property "Value" "LTV-357T"
+			(property "Value" "TLP293"
 				(at 0 5.08 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -2943,7 +2943,7 @@
 					(justify left)
 				)
 			)
-			(property "Footprint" "Package_SO:SO-4_4.4x3.6mm_P2.54mm"
+			(property "Footprint" "Toshiba_SO4_TLP293"
 				(at -5.08 -5.08 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -2956,7 +2956,7 @@
 					(justify left)
 				)
 			)
-			(property "Datasheet" "https://www.buerklin.com/medias/sys_master/download/download/h91/ha0/8892020588574.pdf"
+			(property "Datasheet" "https://toshiba.semicon-storage.com/us/semiconductor/product/isolators-solid-state-relays/detail.TLP293.html"
 				(at 0 0 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -2968,7 +2968,7 @@
 					(justify left)
 				)
 			)
-			(property "Description" "DC Optocoupler, Vce 35V, CTR 50%, SO-4"
+			(property "Description" "DC Optocoupler, Vce 80V, CTR 50%, SO4"
 				(at 0 0 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -2990,7 +2990,7 @@
 					)
 				)
 			)
-			(property "ki_fp_filters" "SO*4.4x3.6mm*P2.54mm*"
+			(property "ki_fp_filters" "*SO4*TLP293*"
 				(at 0 0 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -3010,7 +3010,7 @@
 			(on_board yes)
 			(in_pos_files yes)
 			(duplicate_pin_numbers_are_jumpers no)
-			(symbol "LTV-357T_0_1"
+			(symbol "TLP293_0_1"
 				(rectangle
 					(start -5.08 3.81)
 					(end 5.08 -3.81)
@@ -3191,7 +3191,7 @@
 					)
 				)
 			)
-			(symbol "LTV-357T_1_1"
+			(symbol "TLP293_1_1"
 				(pin passive line
 					(at -7.62 2.54 0)
 					(length 2.54)
@@ -5209,7 +5209,7 @@
     (effects (font (size 1.27 1.27)) (justify left top))
     (uuid "c427b75f-96eb-4fce-b6f5-b194a8e2e526")
   )
-  (text "GND_MCU (left) and GND_BUS (right) are galvanically separate:\n1.6 mm copper-free strip on the PCB, LTV-357T rated 3,750 Vrms.\nGPIO19 high: OK1 pulls DOOR to bus ground (street door opens).\nGPIO18 low: 5 V pulse on CHIME (any ring).\nGPIO20 low while FLOOR idles at 5 V; high while the apartment\nbutton pulls FLOOR to ground."
+  (text "GND_MCU (left) and GND_BUS (right) are galvanically separate:\n1.6 mm copper-free strip on the PCB, TLP293 rated 3,750 Vrms.\nGPIO19 high: OK1 pulls DOOR to bus ground (street door opens).\nGPIO18 low: 5 V pulse on CHIME (any ring).\nGPIO20 low while FLOOR idles at 5 V; high while the apartment\nbutton pulls FLOOR to ground."
     (at 251.46 193.04 0)
     (effects (font (size 1.27 1.27)) (justify left top))
     (uuid "0ea77e7d-c3e8-4d3c-b350-0c5da05f4c7f")
@@ -5219,7 +5219,7 @@
     (effects (font (size 1.27 1.27)) (justify left top))
     (uuid "ebd2b108-cc45-41ef-81d5-eb4333c16f50")
   )
-  (text "BellBridge v1.15 - Ritto 7630 TwinBus interface, ESP32-C6-MINI-1"
+  (text "BellBridge v2.0 - Ritto 7630 TwinBus interface, ESP32-C6-MINI-1"
     (at 30.48 30.48 0)
     (effects (font (size 3 3) (thickness 0.6) (bold yes)) (justify left bottom))
     (uuid "96f28923-e44a-48e0-a7cf-fc58c20129c7")
@@ -5430,7 +5430,7 @@
 				)
 			)
 		)
-		(property "Footprint" "R_0603"
+		(property "Footprint" "R_0402"
 			(at 91.44 91.44 0)
 			(hide yes)
 			(effects
@@ -5448,7 +5448,7 @@
 				)
 			)
 		)
-		(property "Description" "UNI-ROYAL 0603WAF5101T5E LCSC C23186"
+		(property "Description" "UNI-ROYAL 0402WGF5101TCE LCSC C25905"
 			(at 91.44 91.44 0)
 			(hide yes)
 			(effects
@@ -5490,7 +5490,7 @@
 				)
 			)
 		)
-		(property "Footprint" "R_0603"
+		(property "Footprint" "R_0402"
 			(at 99.06 91.44 0)
 			(hide yes)
 			(effects
@@ -5508,7 +5508,7 @@
 				)
 			)
 		)
-		(property "Description" "UNI-ROYAL 0603WAF5101T5E LCSC C23186"
+		(property "Description" "UNI-ROYAL 0402WGF5101TCE LCSC C25905"
 			(at 99.06 91.44 0)
 			(hide yes)
 			(effects
@@ -5552,7 +5552,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "C_0603"
+		(property "Footprint" "C_0402"
 			(at 142.24 91.44 0)
 			(hide yes)
 			(effects
@@ -5570,7 +5570,7 @@
 				)
 			)
 		)
-		(property "Description" "Samsung CL10B104KB8NNNC LCSC C1591"
+		(property "Description" "Samsung CL05B104KO5NNNC LCSC C1525"
 			(at 142.24 91.44 0)
 			(hide yes)
 			(effects
@@ -5738,7 +5738,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "C_0603"
+		(property "Footprint" "C_0402"
 			(at 86.36 152.4 0)
 			(hide yes)
 			(effects
@@ -5756,7 +5756,7 @@
 				)
 			)
 		)
-		(property "Description" "Samsung CL10B104KB8NNNC LCSC C1591"
+		(property "Description" "Samsung CL05B104KO5NNNC LCSC C1525"
 			(at 86.36 152.4 0)
 			(hide yes)
 			(effects
@@ -5862,7 +5862,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "C_0603"
+		(property "Footprint" "C_0402"
 			(at 223.52 83.82 0)
 			(hide yes)
 			(effects
@@ -5880,7 +5880,7 @@
 				)
 			)
 		)
-		(property "Description" "Samsung CL10B104KB8NNNC LCSC C1591"
+		(property "Description" "Samsung CL05B104KO5NNNC LCSC C1525"
 			(at 223.52 83.82 0)
 			(hide yes)
 			(effects
@@ -5984,7 +5984,7 @@
 				)
 			)
 		)
-		(property "Footprint" "R_0603"
+		(property "Footprint" "R_0402"
 			(at 160.02 91.44 0)
 			(hide yes)
 			(effects
@@ -6002,7 +6002,7 @@
 				)
 			)
 		)
-		(property "Description" "UNI-ROYAL 0603WAF1002T5E LCSC C25804"
+		(property "Description" "UNI-ROYAL 0402WGF1002TCE LCSC C25744"
 			(at 160.02 91.44 0)
 			(hide yes)
 			(effects
@@ -6106,7 +6106,7 @@
 				)
 			)
 		)
-		(property "Footprint" "R_0603"
+		(property "Footprint" "R_0402"
 			(at 160.02 116.84 0)
 			(hide yes)
 			(effects
@@ -6124,7 +6124,7 @@
 				)
 			)
 		)
-		(property "Description" "UNI-ROYAL 0603WAF1002T5E LCSC C25804"
+		(property "Description" "UNI-ROYAL 0402WGF1002TCE LCSC C25744"
 			(at 160.02 116.84 0)
 			(hide yes)
 			(effects
@@ -6263,7 +6263,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Isolator:LTV-357T")
+		(lib_id "Isolator:TLP293")
 		(at 297.18 86.36 0)
 		(unit 1)
 		(in_bom yes)
@@ -6279,7 +6279,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "LTV-357T"
+		(property "Value" "TLP293"
 			(at 297.18 81.28 0)
 			(effects
 				(font
@@ -6288,7 +6288,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "SO-4_4.4x3.6mm_P2.54mm"
+		(property "Footprint" "Toshiba_SO4_TLP293"
 			(at 297.18 86.36 0)
 			(hide yes)
 			(effects
@@ -6306,7 +6306,7 @@
 				)
 			)
 		)
-		(property "Description" "Lite-On LTV-357T-C LCSC C119091"
+		(property "Description" "Toshiba TLP293(GB-TPL,E LCSC C77656"
 			(at 297.18 86.36 0)
 			(hide yes)
 			(effects
@@ -6325,7 +6325,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Isolator:LTV-357T")
+		(lib_id "Isolator:TLP293")
 		(at 297.18 132.08 0)
 		(mirror y)
 		(unit 1)
@@ -6342,7 +6342,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "LTV-357T"
+		(property "Value" "TLP293"
 			(at 297.18 127 0)
 			(effects
 				(font
@@ -6351,7 +6351,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "SO-4_4.4x3.6mm_P2.54mm"
+		(property "Footprint" "Toshiba_SO4_TLP293"
 			(at 297.18 132.08 0)
 			(hide yes)
 			(effects
@@ -6369,7 +6369,7 @@
 				)
 			)
 		)
-		(property "Description" "Lite-On LTV-357T-C LCSC C119091"
+		(property "Description" "Toshiba TLP293(GB-TPL,E LCSC C77656"
 			(at 297.18 132.08 0)
 			(hide yes)
 			(effects
@@ -6388,7 +6388,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Isolator:LTV-357T")
+		(lib_id "Isolator:TLP293")
 		(at 297.18 177.8 0)
 		(mirror y)
 		(unit 1)
@@ -6405,7 +6405,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "LTV-357T"
+		(property "Value" "TLP293"
 			(at 297.18 172.72 0)
 			(effects
 				(font
@@ -6414,7 +6414,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "SO-4_4.4x3.6mm_P2.54mm"
+		(property "Footprint" "Toshiba_SO4_TLP293"
 			(at 297.18 177.8 0)
 			(hide yes)
 			(effects
@@ -6432,7 +6432,7 @@
 				)
 			)
 		)
-		(property "Description" "Lite-On LTV-357T-C LCSC C119091"
+		(property "Description" "Toshiba TLP293(GB-TPL,E LCSC C77656"
 			(at 297.18 177.8 0)
 			(hide yes)
 			(effects
@@ -6466,7 +6466,7 @@
 				)
 			)
 		)
-		(property "Value" "220"
+		(property "Value" "150"
 			(at 271.78 83.82 90)
 			(effects
 				(font
@@ -6474,7 +6474,7 @@
 				)
 			)
 		)
-		(property "Footprint" "R_0603"
+		(property "Footprint" "R_0402"
 			(at 271.78 83.82 0)
 			(hide yes)
 			(effects
@@ -6492,7 +6492,7 @@
 				)
 			)
 		)
-		(property "Description" "UNI-ROYAL 0603WAF2200T5E LCSC C22962"
+		(property "Description" "UNI-ROYAL 0402WGF1500TCE LCSC C25082"
 			(at 271.78 83.82 0)
 			(hide yes)
 			(effects
@@ -6534,7 +6534,7 @@
 				)
 			)
 		)
-		(property "Footprint" "R_0603"
+		(property "Footprint" "R_0402"
 			(at 256.54 93.98 0)
 			(hide yes)
 			(effects
@@ -6552,7 +6552,7 @@
 				)
 			)
 		)
-		(property "Description" "UNI-ROYAL 0603WAF1002T5E LCSC C25804"
+		(property "Description" "UNI-ROYAL 0402WGF1002TCE LCSC C25744"
 			(at 256.54 93.98 0)
 			(hide yes)
 			(effects
@@ -6594,7 +6594,7 @@
 				)
 			)
 		)
-		(property "Footprint" "R_0603"
+		(property "Footprint" "R_0402"
 			(at 276.86 121.92 0)
 			(hide yes)
 			(effects
@@ -6612,7 +6612,7 @@
 				)
 			)
 		)
-		(property "Description" "UNI-ROYAL 0603WAF1002T5E LCSC C25804"
+		(property "Description" "UNI-ROYAL 0402WGF1002TCE LCSC C25744"
 			(at 276.86 121.92 0)
 			(hide yes)
 			(effects
@@ -6654,7 +6654,7 @@
 				)
 			)
 		)
-		(property "Footprint" "R_0603"
+		(property "Footprint" "R_0402"
 			(at 276.86 167.64 0)
 			(hide yes)
 			(effects
@@ -6672,7 +6672,7 @@
 				)
 			)
 		)
-		(property "Description" "UNI-ROYAL 0603WAF1002T5E LCSC C25804"
+		(property "Description" "UNI-ROYAL 0402WGF1002TCE LCSC C25744"
 			(at 276.86 167.64 0)
 			(hide yes)
 			(effects
@@ -6714,7 +6714,7 @@
 				)
 			)
 		)
-		(property "Footprint" "R_1210"
+		(property "Footprint" "R_0805"
 			(at 325.12 129.54 0)
 			(hide yes)
 			(effects
@@ -6732,7 +6732,7 @@
 				)
 			)
 		)
-		(property "Description" "YAGEO RC1210FR-071K5L LCSC C309587"
+		(property "Description" "Panasonic ERJ-P06F1501V LCSC C543553"
 			(at 325.12 129.54 0)
 			(hide yes)
 			(effects
@@ -6774,7 +6774,7 @@
 				)
 			)
 		)
-		(property "Footprint" "R_1210"
+		(property "Footprint" "R_0805"
 			(at 325.12 175.26 0)
 			(hide yes)
 			(effects
@@ -6792,7 +6792,7 @@
 				)
 			)
 		)
-		(property "Description" "YAGEO RC1210FR-071K5L LCSC C309587"
+		(property "Description" "Panasonic ERJ-P06F1501V LCSC C543553"
 			(at 325.12 175.26 0)
 			(hide yes)
 			(effects

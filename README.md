@@ -6,26 +6,28 @@ BellBridge connects to four terminals of the indoor station. It tells the
 **apartment bell** from the **street bell** and can **open the street door**, all
 locally through [ESPHome](https://esphome.io/) with no cloud involved. It is the circuit of
 [duramson/ritto-esp](https://github.com/duramson/ritto-esp) turned into a
-26.2 × 27.5 mm board that PCBWay assembles completely, ESP32-C6 module included.
+27.5 × 22.8 mm board that PCBWay assembles completely, ESP32-C6 module included.
 
 <!-- TODO after testing: replace the status line, e.g.
-> **Status:** v1.15 built and tested on a Ritto 7630 (YYYY-MM-DD), see the [test report](docs/testing.md).
+> **Status:** v2.0 built and tested on a Ritto 7630 (YYYY-MM-DD), see the [test report](docs/testing.md).
 -->
 > [!WARNING]
-> **Status:** hardware v1.15 is designed and checked, but it has not yet been built or
-> tested on an intercom. It is v1.1, the smaller follow-up of v1.0, with three part values
-> changed (v1.12), the bus ground routed with tracks (v1.13), the terminal labels printed
-> with thicker lines (v1.14) and smoother tracks (v1.15); see the [changelog](CHANGELOG.md).
+> **Status:** hardware v2.0 is designed and checked, but it has not yet been built or
+> tested on an intercom. It is v1.15 turned for mounting in the Ritto 7630: antenna up,
+> USB-C and the screw terminal side by side on the bottom edge, with smaller parts (TLP293
+> optocouplers, 0402 resistors and capacitors). Same circuit and GPIOs; see the
+> [changelog](CHANGELOG.md).
 
 <!-- TODO: add photos, e.g.
-![BellBridge v1.15, assembled](docs/images/assembled-top.jpg)
+![BellBridge v2.0, assembled](docs/images/assembled-top.jpg)
 ![BellBridge installed behind a Ritto 7630](docs/images/installed.jpg)
 -->
 
-![BellBridge v1.15 with all parts (render)](docs/images/render-assembled.png)
+![BellBridge v2.0 with all parts (render)](docs/images/render-assembled.png)
 
-The assembled board as a KiCad render: USB-C at the top edge, the module on the left
-with its antenna sticking out 5.2 mm past the edge, the screw terminal on the right edge.
+The assembled board as a KiCad render, looking at its bottom edge: USB-C and the screw
+terminal side by side in front, the module behind them with its antenna sticking out
+5.2 mm past the far (top) edge.
 The USB-C receptacle and the screw terminal are simplified models drawn to their
 datasheet dimensions; the other parts use the 3D models from KiCad's and Espressif's
 libraries.
@@ -77,35 +79,38 @@ is blocked for a few seconds, so a chime pulse on its own means "street door".
 
 | | |
 | --- | --- |
-| Size | 26.2 × 27.5 mm, 2 layers, 1.6 mm, no mounting holes; 31.4 × 27.5 mm with the module's antenna, which sticks out past the left edge |
+| Size | 27.5 × 22.8 mm, 2 layers, 1.6 mm, no mounting holes; 27.5 × 28.0 mm with the module's antenna, which sticks out past the top edge |
+| Connectors | USB-C and the screw terminal side by side on the bottom edge; both cables leave downward |
 | Tallest part | screw terminal J1, 8.4 mm; then the USB-C receptacle, 3.3 mm, and the module, 2.4 mm |
 | Controller | Espressif ESP32-C6-MINI-1-N4 (4 MB flash, PCB antenna) |
 | Power | USB-C, 5 V; AP2112K-3.3 LDO; USBLC6-2P6 ESD protection |
-| Inputs | CHIME and FLOOR, 1.5 kΩ / 0.5 W into LTV-357T optocouplers (about 2.5 mA at 5 V) |
-| Output | DOOR, LTV-357T transistor to bus ground |
-| Isolation | separate grounds, 1.6 mm copper-free barrier, optocoupler pad rows 4.3 mm apart, 3,750 V<sub>rms</sub> optocouplers |
+| Inputs | CHIME and FLOOR, 1.5 kΩ / 0.5 W into TLP293 optocouplers (about 2.5 mA at 5 V) |
+| Output | DOOR, TLP293 transistor to bus ground |
+| Isolation | separate grounds, 1.6 mm copper-free barrier, 5.1 mm between the optocouplers' input and output pads, 3,750 V<sub>rms</sub> optocouplers |
 | Terminal | DORABO DB125-2.54, 4 pins at 2.54 mm: DOOR, CHIME, FLOOR, GND |
 
 Details, the parts list and the design checks are in [hardware/README.md](hardware/README.md).
 
 ## Versions
 
-| | v1.15 (current), [v1.14](https://github.com/JayChickenK/bellbridge/tree/v1.14), [v1.13](https://github.com/JayChickenK/bellbridge/tree/v1.13), [v1.12](https://github.com/JayChickenK/bellbridge/tree/v1.12) and [v1.1](https://github.com/JayChickenK/bellbridge/tree/v1.1) | [v1.0](https://github.com/JayChickenK/bellbridge/tree/v1.0) |
-| --- | --- | --- |
-| Board | 26.2 × 27.5 mm; 31.4 mm wide with the antenna | 36.4 × 31.5 mm |
-| Antenna | past the left edge, as Espressif recommends | on the board, at its edge |
-| USB-C | top edge, HRO's recommended land | left edge, KiCad's land |
-| USB ESD array | USBLC6-2P6 in the D+/D− path | USBLC6-2SC6 on side branches |
-| Optocouplers | LTV-357T (SO-4) | LTV-817S (SMDIP-4) with a milled slot |
-| Passives | 0603; R2/R3 in 1210, 0.5 W | 0805; R2/R3 in 2512, 1 W |
-| Terminal | DORABO, 2.54 mm, 26–18 AWG | KANGNEX, 3.81 mm, 26–16 AWG |
-| Download mode, reset | test pads on the back, replug USB | BOOT and RESET buttons |
+| | v2.0 (current) | [v1.15](https://github.com/JayChickenK/bellbridge/tree/v1.15), [v1.14](https://github.com/JayChickenK/bellbridge/tree/v1.14), [v1.13](https://github.com/JayChickenK/bellbridge/tree/v1.13), [v1.12](https://github.com/JayChickenK/bellbridge/tree/v1.12) and [v1.1](https://github.com/JayChickenK/bellbridge/tree/v1.1) | [v1.0](https://github.com/JayChickenK/bellbridge/tree/v1.0) |
+| --- | --- | --- | --- |
+| Board | 27.5 × 22.8 mm; 28.0 mm tall with the antenna | 26.2 × 27.5 mm; 31.4 mm wide with the antenna | 36.4 × 31.5 mm |
+| Antenna | past the top edge, as Espressif recommends | past the left edge, as Espressif recommends | on the board, at its edge |
+| USB-C | bottom edge, beside the terminal; HRO's recommended land | top edge, HRO's recommended land | left edge, KiCad's land |
+| Terminal | bottom edge, wires leave downward; DORABO, 2.54 mm, 26–18 AWG | right edge; DORABO, 2.54 mm, 26–18 AWG | KANGNEX, 3.81 mm, 26–16 AWG |
+| USB ESD array | USBLC6-2P6 in the D+/D− path | USBLC6-2P6 in the D+/D− path | USBLC6-2SC6 on side branches |
+| Optocouplers | TLP293 (SO4, 1.27 mm pitch) | LTV-357T (SO-4) | LTV-817S (SMDIP-4) with a milled slot |
+| Passives | 0402, the 10/22 µF capacitors 0603; R2/R3 in 0805, 0.5 W | 0603; R2/R3 in 1210, 0.5 W | 0805; R2/R3 in 2512, 1 W |
+| Download mode, reset | test pads on the back, replug USB | test pads on the back, replug USB | BOOT and RESET buttons |
 
 v1.12 is v1.1 with three part values changed (R6 10 kΩ, C6 10 µF, C2 22 µF) and a wider
 panel note for PCBWay; the copper is the same. v1.13 adds tracks for the bus ground, so it no
 longer depends on the ground pour alone; v1.14 prints the terminal labels with thicker
-lines, and v1.15 has smoother tracks, redrawn by hand in KiCad. All versions have the same
-circuit,
+lines, and v1.15 has smoother tracks, redrawn by hand in KiCad. v2.0 turns the layout for
+mounting in the Ritto 7630, with both cables leaving at the bottom, and uses smaller parts
+(TLP293 optocouplers, 0402 resistors and capacitors). All versions have the
+same circuit,
 terminal order and GPIOs. v1.0 has been assembled (photos below); the later versions have
 not been built yet. The firmware in this branch runs on
 all of them; the copy in the v1.0 files has a bell-logic bug (see the

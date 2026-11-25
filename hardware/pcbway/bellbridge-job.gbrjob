@@ -5,17 +5,17 @@
       "Application": "Pcbnew",
       "Version": "10.0.8+dfsg-1"
     },
-    "CreationDate": "2026-11-23T12:38:06+00:00"
+    "CreationDate": "2026-11-25T18:35:14+00:00"
   },
   "GeneralSpecs": {
     "ProjectId": {
       "Name": "bellbridge",
       "GUID": "62656c6c-6272-4696-9467-652e6b696361",
-      "Revision": "1.15"
+      "Revision": "2.0"
     },
     "Size": {
-      "X": 26.25,
-      "Y": 27.55
+      "X": 27.55,
+      "Y": 22.85
     },
     "LayerNumber": 2,
     "BoardThickness": 1.6,

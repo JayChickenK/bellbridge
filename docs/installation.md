@@ -34,8 +34,8 @@ by [quhfan.de](https://quhfan.de/post/ritto-twinbus-7630-smart-home-assistant/) 
 | 5 | door opener: buzzes when pulled to GND | DOOR |
 | 6 | GND | GND (1 or 6, one is enough) |
 
-J1's pins from top to bottom (top view, wire openings on the right) are DOOR, CHIME,
-FLOOR, GND, as printed beside the terminal.
+J1's pins from right to left (top view, wire openings at the bottom) are DOOR, CHIME,
+FLOOR, GND, as printed above the terminal.
 
 ## Steps
 
@@ -45,15 +45,17 @@ FLOOR, GND, as printed beside the terminal.
    behaves differently, stop and compare with the ritto-esp measurements.
 2. **Wire it.** Connect DOOR to 5, CHIME to 2, FLOOR to 4 and GND to 1 (or 6), as in the
    ritto-esp build. Check that no wire touches terminal 3 or a neighbouring contact.
-3. **Place the board.** The module's antenna is the part beyond its metal shield that sticks
-   out 5.2 mm past the left edge, along its lower half. Espressif recommends at least 15 mm
+3. **Place the board** with the antenna up and the cables down: USB-C and J1 sit side by
+   side on the bottom edge, so the USB cable and the bus wires both leave the board
+   downward. The module's antenna is the part beyond its metal shield that sticks out
+   5.2 mm past the top edge, along the left half of it. Espressif recommends at least 15 mm
    of free space around it in all directions inside the housing: keep metal (back boxes,
    mounting plates, the intercom's chassis), the housing wall and the bus wiring that far
    away, and do not put the board in a metal box. Do not push, wedge or rest the board on
    the antenna.
-   Insulate the bottom side with foam tape: the J1 pins, the USB shell lugs and the two
-   test pads are exposed there. J1 stands 8.4 mm tall plus the wires, and the USB-C plug
-   at the top edge needs room for its cable bend.
+   Insulate the back of the board with foam tape: the J1 pins, the USB shell lugs and the
+   two test pads are exposed there. J1 stands 8.4 mm tall plus the wires, and the USB-C
+   plug below the board needs room for its cable bend.
 4. **Power it** from the USB-C supply. Within a few seconds the node is online in Home
    Assistant.
 5. **Test it at the door** (section 4 of [testing.md](testing.md)). Then check that the
